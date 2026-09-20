@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from urllib.parse import unquote
 from zoneinfo import ZoneInfo
 import hashlib
 import os
@@ -144,6 +145,14 @@ def _user_now(request: Request) -> datetime:
     """
     tz_name = request.cookies.get("tz")
     if tz_name:
+        # Starlette reads the Cookie header raw — it does NOT percent-
+        # decode values — but the script that sets this cookie encodes
+        # it (encodeURIComponent), turning "Asia/Kolkata" into
+        # "Asia%2FCalcutta". Left undecoded, ZoneInfo() rejects that
+        # string and this silently fell back to server time on every
+        # single request, which looked exactly like the cookie wasn't
+        # working at all.
+        tz_name = unquote(tz_name)
         try:
             return datetime.now(ZoneInfo(tz_name))
         except Exception:
