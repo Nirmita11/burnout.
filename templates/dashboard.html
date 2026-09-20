@@ -70,7 +70,7 @@
         {% endif %}
 
         <h2 class="risk-headline">
-          <span class="trend-tag">30-DAY TREND</span>
+          <span class="trend-tag">{{ rows|length }}-DAY TREND</span>
           {% if risk.reasons %}{{ risk.reasons[0] }}{% elif risk.good_reset %}{{ risk.good_reset }}{% else %}Your recent numbers are staying in a healthy range.{% endif %}
         </h2>
 
@@ -178,7 +178,7 @@
     <section class="stats-card">
       <div class="floating-card">
         <div class="fc-head">
-          <span class="fc-label">30-DAY AVERAGES</span>
+          <span class="fc-label">{{ rows|length }}-DAY AVERAGES</span>
           <span class="fc-pill">{{ risk.level }} risk</span>
         </div>
         <div class="fc-stats">
