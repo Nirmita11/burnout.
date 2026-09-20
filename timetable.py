@@ -110,10 +110,20 @@ def _deadline_day_index(subject, week_start):
     return max(0, delta)
 
 
-def _preferred_day_indices(subject, deadline_idx):
-    """The DAYS indices the student explicitly picked for this subject
-    (from the "spread across specific days" picker on the subject form),
-    or None if they left it to the automatic even spread.
+def _preferred_day_indices(subject, deadline_idx, day_names):
+    """Which positions in *this plan* (0=today..6=six days out) the
+    student explicitly picked for this subject (from the "spread across
+    specific days" picker on the subject form), or None if they left it
+    to the automatic even spread.
+
+    `preferred_days` is stored as absolute weekday names ("Tuesday"), so
+    it has to be resolved against day_names — the real weekday name at
+    each position of *this* plan, which starts from today and therefore
+    shifts depending what day today is — not against the fixed DAYS
+    list. DAYS is Monday-anchored (Monday=0) for stable storage/parsing,
+    but plan positions are today-anchored (today=0); conflating the two
+    made a picked "Tuesday" land on whatever position happened to be
+    Monday+1 in the canonical list instead of the plan's actual Tuesday.
 
     A picked day past the subject's own deadline is dropped rather than
     honored — the deadline still wins over a stale day choice (e.g. the
@@ -122,7 +132,8 @@ def _preferred_day_indices(subject, deadline_idx):
     raw = subject.get("preferred_days")
     if not raw:
         return None
-    idxs = sorted({DAYS.index(d) for d in raw.split(",") if d in DAYS})
+    picked = {d for d in raw.split(",") if d in DAYS}
+    idxs = sorted({day_names.index(d) for d in picked if d in day_names})
     if deadline_idx is not None:
         idxs = [i for i in idxs if i <= deadline_idx]
     return idxs or None
@@ -206,7 +217,7 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None, tod
     # across (or None to keep the automatic even spread over every day
     # up to its deadline).
     preferred_idx = [
-        _preferred_day_indices(s, deadline_idx[i]) for i, s in enumerate(flexible)
+        _preferred_day_indices(s, deadline_idx[i], day_names) for i, s in enumerate(flexible)
     ]
 
     # On Low risk, if the nearest-deadline subject actually has a real
