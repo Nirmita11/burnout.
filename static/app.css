@@ -1,0 +1,934 @@
+/* =========================================================
+   BURNOUT. — WARM CHARCOAL DESIGN SYSTEM
+   Warm dark charcoal-brown base, single coral/amber accent, cream text.
+   Every color in this file comes from the variables below — no other
+   hex/rgb color values should appear past this block. Variable names
+   were changed (not just re-valued) from the prior "Midnight Forest"
+   palette (--gold/--sage/--ivory etc.) specifically so a grep for those
+   old names catches any leftover reference.
+   ========================================================= */
+
+:root{
+  --bg:#171310;          /* base — warm near-black, brown undertone */
+  --bg2:#1e1812;         /* panel background */
+  --bg3:#261e16;         /* card / hover background */
+
+  --coral:#e8916b;         /* the ONE accent — buttons, links, highlights, chart lines, cursor */
+  --coral-dim:#c67251;      /* darker coral, gradients/pressed states */
+  --coral-light:#f2ab8a;    /* lighter coral, gradients + secondary chart line */
+
+  --cream:#f3ece2;          /* primary text */
+  --muted:#b3a494;          /* secondary/muted warm grey text */
+  --muted-dim:#7d7062;      /* faintest warm grey text */
+
+  --line:rgba(179,164,148,.16);
+  --line-soft:rgba(179,164,148,.09);
+
+  --status-low:#8db596;     /* Low risk / positive movement */
+  --status-moderate:#d9a24e;/* Moderate risk */
+  --status-high:#c1573f;    /* High risk — distinct from the coral CTA accent */
+
+  --serif:"Fraunces",Georgia,serif;
+  --sans:"Inter",sans-serif;
+  --mono:"JetBrains Mono","DM Mono",monospace;
+
+  --ease:cubic-bezier(.22,.68,.36,1);
+  --content-max:1040px;
+  --nav-h:76px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-h) + 24px)}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--cream);
+  font-family:var(--sans);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+::selection{background:rgba(232,145,107,.28);color:var(--cream)}
+
+/* =========================================================
+   ATMOSPHERE — Warm Charcoal: one soft amber/coral glow from the
+   upper-left fading into the base, plus a scatter of low-opacity
+   line-art motifs (coffee cup, plant sprig, open book, candle, glasses,
+   pencil) drawn from the cozy study-space reference photos — never a
+   flat, empty background. Each motif drifts independently and slowly;
+   nothing here is regenerated or reseeded.
+   ========================================================= */
+
+/* One composited background, not separate circular shapes: each
+   radial-gradient is sized well past the element itself (150% 150%) and
+   fades through several gradual stops, so the eye reads a single
+   continuous warm wash instead of distinguishable "circle, circle,
+   circle" glows. No blur filter needed — the gradient's own falloff is
+   already smooth, and blurring a hard-edged shape was what made the
+   individual glows readable as separate rings before. */
+.warm-bg{
+  position:fixed;
+  inset:0;
+  z-index:-3;
+  overflow:hidden;
+  pointer-events:none;
+  background:
+    radial-gradient(150% 150% at 6% -8%, rgba(232,145,107,.15) 0%, rgba(232,145,107,.08) 22%, rgba(232,145,107,.03) 42%, transparent 66%),
+    radial-gradient(140% 140% at 94% 4%, rgba(198,114,81,.11) 0%, rgba(198,114,81,.05) 26%, rgba(198,114,81,.02) 46%, transparent 64%),
+    radial-gradient(170% 170% at 82% 50%, rgba(38,30,22,.16) 0%, rgba(38,30,22,.07) 32%, transparent 62%),
+    radial-gradient(150% 150% at 100% 106%, rgba(232,145,107,.06) 0%, rgba(232,145,107,.025) 30%, transparent 62%),
+    radial-gradient(130% 130% at 16% 98%, rgba(198,114,81,.08) 0%, rgba(198,114,81,.03) 28%, transparent 58%),
+    var(--bg);
+}
+
+.warm-motifs{position:absolute;inset:0}
+.warm-motif{
+  position:absolute;
+  opacity:.09;
+  color:var(--coral);
+  will-change:transform;
+  animation:motifDrift var(--dur,6s) ease-in-out infinite;
+  animation-delay:var(--delay,0s);
+}
+.warm-motif svg{display:block;width:100%;height:100%}
+@keyframes motifDrift{
+  0%,100%{ transform:translate(0,0) rotate(0deg) }
+  50%{ transform:translate(0,-14px) rotate(-3deg) }
+}
+
+.noise{
+  position:fixed; inset:0; opacity:.028; pointer-events:none; z-index:20; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+
+/* Custom cursor — replaces the native OS cursor everywhere, coral glow */
+html, body { cursor: none !important; }
+a, button, input, select, textarea, [role="button"], .btn {
+    cursor: none !important;
+}
+summary, label, .mood-row span {
+    cursor: none !important;
+}
+#customCursor {
+    position: fixed;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232, 145, 107, 0.9), rgba(232, 145, 107, 0.1));
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 16px rgba(232, 145, 107, 0.7);
+    transition: width 0.15s ease, height 0.15s ease;
+}
+
+/* Skip link + focus visibility — keyboard accessibility */
+.skip-link{
+  position:fixed; top:-60px; left:16px; z-index:300;
+  background:var(--coral); color:#241a13; padding:12px 20px; border-radius:12px;
+  font:600 14px var(--sans); transition:top .25s var(--ease);
+}
+.skip-link:focus{ top:16px }
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+summary:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--coral); outline-offset:3px; border-radius:4px;
+}
+.mood-row input:focus-visible + span{ outline:2px solid var(--coral); outline-offset:2px }
+
+/* =========================================================
+   SHELL / LANDING + AUTH NAV
+   ========================================================= */
+
+.shell{
+  width:min(1440px, calc(100% - 80px));
+  margin:0 auto;
+  position:relative;
+}
+
+.nav{
+  height:96px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  z-index:4;
+}
+.brand{font:italic 600 26px var(--serif);letter-spacing:-.5px;color:var(--cream)}
+.nav-right{display:flex;gap:24px;align-items:center}
+.ghost-link{color:var(--muted);font-size:14px;transition:color .25s var(--ease)}
+.ghost-link:hover{color:var(--cream)}
+.nav-pill,.secondary-btn{
+  border:1px solid var(--line);
+  background:rgba(179,164,148,.05);
+  border-radius:100px;
+  padding:11px 24px;
+  font-size:14px;
+  font-weight:500;
+  transition:.25s var(--ease);
+}
+.nav-pill:hover,.secondary-btn:hover{border-color:rgba(232,145,107,.4);background:rgba(232,145,107,.08)}
+.user-chip{font:11px var(--mono);color:var(--muted-dim);letter-spacing:.5px}
+
+.primary-btn{
+  display:inline-flex;justify-content:center;align-items:center;gap:12px;
+  border:0;
+  background:linear-gradient(105deg,var(--coral-light),var(--coral));
+  color:#241a13;
+  padding:16px 30px;
+  border-radius:100px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:0 14px 40px rgba(232,145,107,.18);
+  transition:.3s var(--ease);
+}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 18px 48px rgba(232,145,107,.28)}
+.primary-btn.full{width:100%}
+.text-link{color:var(--coral-light);font-size:15px;display:inline-flex;align-items:center;gap:8px;transition:gap .25s var(--ease)}
+.text-link:hover{gap:12px}
+
+.eyebrow,.mini-label,.section-kicker{
+  font:500 11px var(--mono);
+  letter-spacing:2px;
+  color:var(--muted-dim);
+  text-transform:uppercase;
+}
+.eyebrow{display:flex;align-items:center;gap:10px}
+.pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--coral);box-shadow:0 0 12px var(--coral);animation:pulse 2.6s infinite}
+@keyframes pulse{50%{opacity:.3;transform:scale(.72)}}
+
+/* Fade-in on scroll */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* =========================================================
+   PERSISTENT APP NAV — every logged-in page. Stays fixed at the top
+   at all times (never scrolls away), so "Log Today" is always one
+   click away regardless of how far down the dashboard you've scrolled.
+   ========================================================= */
+
+.app-nav{
+  position:sticky; top:0; z-index:100;
+  width:100%;
+  height:var(--nav-h);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 max(24px, calc((100% - 1440px) / 2 + 8px));
+  background:rgba(23,19,16,.5);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:0 1px 0 rgba(179,164,148,.09);
+  animation:navSettle .7s var(--ease);
+}
+@keyframes navSettle{
+  0%{ transform:translateY(-14px); opacity:0 }
+  100%{ transform:translateY(0); opacity:1 }
+}
+.app-nav .brand{font-size:21px}
+.app-nav-links{display:flex;align-items:center;gap:6px}
+.app-nav-link{
+  color:var(--muted);font-size:14px;font-weight:500;
+  padding:9px 16px;border-radius:100px;transition:.2s var(--ease);
+}
+.app-nav-link:hover{color:var(--cream);background:rgba(179,164,148,.06)}
+.app-nav-link.current{color:var(--cream);background:rgba(179,164,148,.08)}
+.app-nav-cta{
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  background:linear-gradient(105deg,var(--coral-light),var(--coral));
+  color:#241a13;font-size:14px;font-weight:600;
+  padding:10px 20px;border-radius:100px;margin-left:6px;
+  box-shadow:0 8px 24px rgba(232,145,107,.22);
+  transition:.25s var(--ease);
+}
+.app-nav-cta:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(232,145,107,.3)}
+.app-nav-logout{color:var(--muted-dim);font-size:13px;margin-left:14px;padding:9px 6px;white-space:nowrap}
+.app-nav-logout:hover{color:var(--cream)}
+
+/* =========================================================
+   LANDING PAGE — editorial, spacious, narrative sections
+   ========================================================= */
+
+.editorial-section{
+  padding:min(10vh,100px) 8px;
+  min-height:62vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+}
+.editorial-section.compact{min-height:auto;padding:90px 8px}
+
+/* Explicit flex-direction/justify-content here, even though they look
+   redundant with the defaults: .editorial-section (the other class on
+   this same element) sets flex-direction:column + justify-content:center
+   for its other (single-column, centered) sections, and without an
+   explicit override here that cascades in and re-centers hero-copy as a
+   block instead of anchoring it to the left like the rest of the page. */
+.hero-section{
+  /* Kept fairly short on purpose: align-items:center below also centers
+     hero-copy within whatever slack is left between the padding and
+     min-height, so a tall min-height doesn't just add padding — it adds
+     that much *more* dead air above and below the text too. */
+  min-height:72vh;
+  padding-top:min(3vh,32px);
+  padding-bottom:min(7vh,70px);
+  position:relative;display:flex;flex-direction:row;justify-content:flex-start;align-items:center;
+}
+.hero-copy{position:relative;z-index:2;max-width:640px}
+h1.display{
+  font:600 clamp(42px,6.2vw,84px)/1.06 var(--serif);
+  letter-spacing:-2.2px;
+  margin:26px 0 24px;
+  max-width:640px;
+  color:var(--cream);
+}
+h1.display em{font-style:italic;color:var(--coral);font-weight:500}
+.lede{
+  font-size:clamp(16px,1.5vw,19px);
+  line-height:1.7;
+  color:var(--muted);
+  max-width:520px;
+  margin:0 0 36px;
+  font-weight:300;
+}
+.cta-row{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+
+/* Hero image — merged into the page's own warm-bg wash rather than
+   framed as a separate card: no border/panel/shadow, just a soft mask
+   that fades the photo into transparency so the warm-bg blobs show
+   through and the image reads as part of the same continuous
+   background, not a box sitting on top of it.
+
+   It sits as a wide horizontal layer behind the copy (not a column
+   next to it), stretching across most of the section so it can run at
+   its own natural width/height — no forced crop — instead of being
+   squeezed into a narrow portrait box. The mask fades hardest on the
+   left, right where it passes behind the text, so the copy stays the
+   clearly readable element and the photo reads as atmosphere behind
+   it, opening up (less faded) toward the right where it's clear of
+   the text. */
+.hero-visual{
+  position:absolute;
+  top:50%;
+  /* .shell caps out at min(1440px, 100% - 80px) and centers itself, so
+     `right:0` here would stop at the shell's edge and leave a gap to the
+     actual browser edge equal to half of whatever .shell trimmed off.
+     Mirroring that same formula (negated, halved) cancels it out so the
+     image's right edge always lands flush on the true viewport edge,
+     however wide the window is — no empty space, no bleed past it. */
+  right:calc(-1 * (100vw - min(1440px, calc(100vw - 80px))) / 2);
+  transform:translateY(-50%);
+  width:min(80%, 1180px);
+  z-index:1;
+  pointer-events:none;
+}
+.hero-blend-img{
+  display:block;
+  width:100%;
+  height:auto;
+  filter:sepia(.28) saturate(1.05) contrast(1.02) brightness(.62) hue-rotate(-4deg);
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.55) 8%, #000 22%, #000 78%, rgba(0,0,0,.55) 92%, transparent 100%),
+    linear-gradient(to right, transparent 0%, transparent 20%, rgba(0,0,0,.35) 38%, #000 60%, #000 92%, rgba(0,0,0,.6) 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.55) 8%, #000 22%, #000 78%, rgba(0,0,0,.55) 92%, transparent 100%),
+    linear-gradient(to right, transparent 0%, transparent 20%, rgba(0,0,0,.35) 38%, #000 60%, #000 92%, rgba(0,0,0,.6) 100%);
+  mask-composite: intersect;
+}
+
+/* Floating card — the rounded/bordered/shadowed container language
+   reused for the dashboard's own signal/stat cards, so the whole app
+   reads as one design system rather than a different look per page. */
+.floating-card{
+  background:linear-gradient(165deg,var(--bg3),var(--bg2));
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:28px 26px 24px;
+  box-shadow:0 40px 90px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.03) inset;
+  max-width:400px;
+  margin-left:auto;
+  position:relative;
+}
+.fc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.fc-label{font:600 11px var(--mono);letter-spacing:1.8px;text-transform:uppercase;color:var(--muted-dim)}
+.fc-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font:600 11px var(--mono);letter-spacing:.5px;
+  color:var(--coral-light);background:rgba(232,145,107,.1);
+  border:1px solid rgba(232,145,107,.28);
+  padding:5px 12px;border-radius:100px;
+}
+.fc-stats{display:grid;gap:0}
+.fc-stat-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:12px 0;border-top:1px solid var(--line-soft);font-size:14px;color:var(--muted);
+}
+.fc-stat-row:first-child{border-top:0}
+.fc-stat-row b{color:var(--cream);font-weight:500}
+
+/* Section 2 — the pattern: three connected signals, not cards */
+.signals-row{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:0;
+  margin-top:70px; position:relative;
+}
+.signals-row:before{
+  content:""; position:absolute; left:8%; right:8%; top:26px; height:1px;
+  background:linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent);
+}
+.signal-node{position:relative; padding:0 26px; text-align:left}
+.signal-node .dot{
+  width:11px;height:11px;border-radius:50%;margin-bottom:26px;position:relative;z-index:2;
+  box-shadow:0 0 0 6px var(--bg);
+  background:var(--coral);
+}
+.signal-node h3{font:500 26px var(--serif);margin:0 0 10px;letter-spacing:-.4px}
+.signal-node p{color:var(--muted);line-height:1.65;margin:0;max-width:280px;font-size:15px}
+
+/* Section 3 — the signal: numbers vs pattern statement */
+.statement-block{max-width:780px}
+.statement-block .big-line{font:500 clamp(30px,4vw,50px)/1.28 var(--serif);letter-spacing:-1px;color:var(--muted)}
+.statement-block .big-line strong{color:var(--cream);font-weight:500}
+
+/* Section 4 — the adjustment: mini adaptive schedule preview */
+.adjust-preview{
+  margin-top:56px; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;
+}
+.mini-timeline{border-left:1px solid var(--line); padding-left:24px; display:grid; gap:20px}
+.mini-timeline div{position:relative}
+.mini-timeline div:before{content:"";position:absolute;left:-29px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--coral);box-shadow:0 0 10px rgba(232,145,107,.5)}
+.mini-timeline b{display:block;font:10px var(--mono);letter-spacing:1.5px;color:var(--coral-light);margin-bottom:3px}
+.mini-timeline span{font-size:14px;color:var(--muted)}
+
+/* Section 5 — final CTA */
+.final-cta{text-align:center;align-items:center}
+.final-cta h2{font:600 clamp(36px,5.4vw,68px)/1.14 var(--serif);letter-spacing:-1.5px;margin:22px 0 40px}
+.final-cta .cta-row{justify-content:center}
+
+.footer{text-align:center;padding:50px 8px 60px;color:var(--muted-dim);font:10px var(--mono);letter-spacing:2px;text-transform:uppercase}
+
+/* =========================================================
+   AUTH PAGES
+   ========================================================= */
+
+.auth-page{min-height:100vh;display:grid;place-items:center;padding:30px;position:relative}
+.auth-brand{position:fixed;top:38px;left:8px}
+.auth-card{
+  width:min(440px,100%);
+  background:rgba(30,24,18,.6);
+  border:1px solid var(--line);
+  border-radius:28px;
+  padding:52px 46px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 40px 120px rgba(4,3,2,.45);
+}
+.auth-card h1{font:600 42px var(--serif);letter-spacing:-1.5px;margin:20px 0 12px}
+.auth-card>p{color:var(--muted);line-height:1.65;margin:0 0 32px;font-size:15px}
+.auth-card form{display:grid;gap:20px}
+.auth-card label,.log-form label,.subject-form label{font-size:13px;color:var(--muted);display:grid;gap:9px}
+.auth-card input,.log-form input,.subject-form input,.subject-form select{
+  width:100%;background:rgba(12,9,7,.7);border:1px solid var(--line);border-radius:14px;
+  padding:15px 16px;color:var(--cream);font:15px var(--sans);outline:none;transition:.25s var(--ease);
+}
+.auth-card input:focus,.log-form input:focus,.subject-form input:focus,.subject-form select:focus{border-color:rgba(232,145,107,.55);box-shadow:0 0 0 4px rgba(232,145,107,.08)}
+.auth-foot{text-align:center;color:var(--muted-dim);margin-top:28px;font-size:14px}
+.auth-foot a{color:var(--coral-light)}
+.error{background:rgba(193,87,63,.09);border:1px solid rgba(193,87,63,.25);color:#e8b3a4;padding:13px 16px;border-radius:14px;margin-bottom:20px;font-size:14px}
+.hide{opacity:0;transition:opacity .6s}
+
+/* =========================================================
+   DASHBOARD — second chapter of the same story
+   ========================================================= */
+
+.dashboard-shell{padding-bottom:40px}
+.toast{position:fixed;right:8px;top:calc(var(--nav-h) + 16px);z-index:50;background:var(--coral);color:#241a13;padding:14px 22px;border-radius:100px;box-shadow:0 16px 50px rgba(0,0,0,.35);transition:.6s;font-size:14px;font-weight:500;pointer-events:none}
+
+.dash-head{max-width:var(--content-max);margin:0 auto;padding:36px 8px 12px}
+.dash-head .context-line{font:500 15px var(--mono);color:var(--muted-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:18px}
+.dash-head h1{
+  font:600 clamp(34px,4.6vw,58px)/1.14 var(--serif);
+  letter-spacing:-1.4px;
+  margin:0;
+  max-width:880px;
+  color:var(--cream);
+}
+
+/* Empty state */
+.empty-state{max-width:var(--content-max);margin:40px auto;padding:90px 40px;text-align:center;border:1px dashed var(--line);border-radius:28px}
+.orb-small{width:52px;height:52px;border-radius:50%;margin:auto;background:radial-gradient(circle at 35% 30%, var(--coral-light), var(--coral) 70%);box-shadow:0 0 45px rgba(232,145,107,.35)}
+.empty-state h2{font:500 30px var(--serif);margin:24px 0 10px;letter-spacing:-.5px}
+.empty-state p{color:var(--muted);max-width:420px;margin:0 auto}
+
+/* Risk hero — orbital score + noticing chips */
+.risk-hero{
+  position:relative;
+  max-width:var(--content-max);
+  margin:30px auto 0;
+  padding:48px 8px 10px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:56px;
+  align-items:start;
+}
+
+.orbit-wrap{position:relative;width:190px;height:190px;flex:none}
+.orbit-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.orbit-track{fill:none;stroke:var(--line);stroke-width:1.5}
+.orbit-progress{
+  fill:none;stroke-width:2.5;stroke-linecap:round;
+  stroke-dasharray:565.5; stroke-dashoffset:565.5;
+  transition:stroke-dashoffset 1.6s var(--ease) .3s, stroke 1s var(--ease);
+}
+.orbit-progress.low{stroke:var(--status-low)}
+.orbit-progress.moderate{stroke:var(--status-moderate)}
+.orbit-progress.high{stroke:var(--status-high)}
+.orbit-center{
+  position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+}
+.orbit-center strong{font:600 46px var(--serif);letter-spacing:-1px;display:block;color:var(--cream)}
+.orbit-center span{font:10px var(--mono);letter-spacing:1.5px;color:var(--muted-dim);text-transform:uppercase}
+
+.risk-copy{padding-top:6px}
+.risk-level-tag{
+  display:inline-flex;align-items:center;gap:8px;font:600 12px var(--mono);letter-spacing:2px;text-transform:uppercase;
+  padding:7px 16px;border-radius:100px;border:1px solid var(--line);margin-bottom:20px;
+}
+.risk-level-tag.low{color:var(--status-low);border-color:rgba(141,181,150,.35)}
+.risk-level-tag.moderate{color:var(--status-moderate);border-color:rgba(217,162,78,.35)}
+.risk-level-tag.high{color:var(--status-high);border-color:rgba(193,87,63,.35)}
+
+.today-line{font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 14px;max-width:600px}
+.today-line.good{color:var(--cream)}
+.today-tag{font:700 10px var(--mono);letter-spacing:1.5px;color:var(--muted-dim);margin-right:8px}
+.today-line.good .today-tag{color:var(--status-low)}
+.today-line.tough .today-tag{color:var(--status-high)}
+
+.trend-tag{display:block;font:700 10px var(--mono);letter-spacing:1.5px;color:var(--muted-dim);margin-bottom:8px}
+.risk-headline{font:500 clamp(28px,3.4vw,42px)/1.25 var(--serif);letter-spacing:-.8px;margin:0 0 20px;max-width:640px}
+.risk-why{color:var(--muted);line-height:1.7;max-width:600px;margin:0 0 30px;font-size:16px}
+.risk-why.positive{color:var(--status-low)}
+
+.noticing{margin-top:6px}
+.noticing .mini-label{margin-bottom:14px;display:block}
+.noticing-row{display:flex;flex-wrap:wrap;gap:12px}
+.notice-chip{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(179,164,148,.05);border:1px solid var(--line);
+  padding:11px 16px;border-radius:14px;font-size:14px;color:var(--cream);
+}
+.notice-chip .arrow{font-size:15px;font-weight:600;color:var(--muted)}
+.notice-chip.risk .arrow{color:var(--status-high)}
+.notice-chip.positive .arrow{color:var(--status-low)}
+.notice-chip small{color:var(--muted-dim);font:11px var(--mono)}
+
+.model-link-row{max-width:var(--content-max);margin:16px auto 0;padding:0 8px;text-align:right}
+.text-link.subtle{color:var(--muted-dim);font-size:13px}
+.text-link.subtle:hover{color:var(--coral-light)}
+
+/* What your day needs — the most important card */
+.needs-card{
+  max-width:var(--content-max);
+  margin:56px auto 0;
+  padding:56px 8px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:60px;
+  align-items:center;
+}
+.needs-card .mini-label{margin-bottom:16px}
+.needs-card h2{font:600 clamp(32px,4vw,52px)/1.16 var(--serif);letter-spacing:-1.2px;margin:0 0 22px}
+.needs-card p{color:var(--muted);line-height:1.75;font-size:16px;max-width:480px;margin:0 0 30px}
+.needs-visual{
+  border:1px solid var(--line);border-radius:26px;padding:34px;
+  background:radial-gradient(circle at 75% 20%, rgba(232,145,107,.10), transparent 55%), rgba(30,24,18,.4);
+  min-height:220px;
+}
+.needs-visual .tag{font:10px var(--mono);letter-spacing:1.5px;color:var(--muted-dim);text-transform:uppercase;margin-bottom:16px;display:block}
+.needs-visual .load-bars{display:flex;align-items:end;gap:8px;height:90px}
+.needs-visual .load-bars i{flex:1;border-radius:5px 5px 0 0;background:linear-gradient(to top, var(--coral-dim), var(--coral-light));opacity:.85}
+.needs-visual .load-caption{margin-top:16px;color:var(--muted);font-size:13px}
+
+/* Log-today block — relocated near the top of the page (was previously
+   the very last thing on the page, which was a real usability problem
+   for something done every day). Adaptive: shows the full form if today
+   hasn't been logged yet, or a compact confirmation + edit toggle if it
+   has, so a returning visitor isn't shown a redundant form every time. */
+.log-today-block{max-width:var(--content-max);margin:56px auto 0;padding:0 8px}
+.log-today-card{
+  border:1px solid var(--line);border-radius:24px;padding:36px 34px;
+  background:linear-gradient(165deg,var(--bg3),var(--bg2));
+}
+.log-today-card.pending{border-color:rgba(232,145,107,.3)}
+.log-today-card h2{font:600 26px var(--serif);letter-spacing:-.5px;margin:10px 0 8px}
+.log-today-card>p{color:var(--muted);margin:0 0 22px}
+
+.streak-note{color:var(--coral-light);font-size:13px;margin:14px 0 0}
+
+.log-today-edit summary{color:var(--coral-light);font-size:13px;cursor:pointer;margin-top:18px;list-style:none}
+.log-today-edit summary::-webkit-details-marker{display:none}
+.log-today-edit[open] .log-form{margin-top:22px}
+
+.sleep-time-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sleep-why{margin-top:2px}
+.sleep-why summary{color:var(--muted-dim);font-size:12px;cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px}
+.sleep-why summary::-webkit-details-marker{display:none}
+.sleep-why summary:hover{color:var(--coral-light)}
+.sleep-why-body{margin-top:10px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(179,164,148,.03);font-size:13px;color:var(--muted);line-height:1.6}
+
+/* Today's schedule — elegant vertical timeline */
+.section-block{max-width:var(--content-max);margin:70px auto 0;padding:0 8px}
+.section-block .card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.section-block h2{font:500 30px var(--serif);letter-spacing:-.6px;margin:8px 0 0}
+
+#schedule .card-head{justify-content:center;text-align:center}
+#schedule .card-head > div{width:100%}
+
+.timeline{margin:34px auto 0;border-left:1px solid var(--line);padding-left:30px;display:grid;gap:30px;max-width:640px}
+.timeline .t-item{position:relative}
+/* A real, clickable element in the dot's old spot (was a ::before marker)
+   — purely a local "I did this today" toggle: click glows it, click again
+   clears it. Never touches the subject, the plan, or the server; a page
+   reload resets it, which is fine for a same-day checklist. */
+.t-dot{
+  position:absolute;left:-35.5px;top:5px;width:9px;height:9px;border-radius:50%;
+  padding:0;background:var(--bg);border:2px solid var(--coral);cursor:pointer;
+  transition:.2s var(--ease);
+}
+.t-item.rest .t-dot{border-color:var(--status-low)}
+.t-dot:hover{transform:scale(1.3)}
+.t-dot[aria-pressed="true"]{
+  background:var(--coral);box-shadow:0 0 0 4px rgba(232,145,107,.25),0 0 14px rgba(232,145,107,.65);
+}
+.t-item.rest .t-dot[aria-pressed="true"]{
+  background:var(--status-low);box-shadow:0 0 0 4px rgba(141,181,150,.25),0 0 14px rgba(141,181,150,.65);
+}
+.timeline .t-time{font:11px var(--mono);color:var(--muted-dim);letter-spacing:1px;margin-bottom:4px}
+.timeline .t-kind{font:600 12px var(--mono);letter-spacing:1.8px;text-transform:uppercase;color:var(--coral);margin-bottom:4px}
+.timeline .t-item.rest .t-kind{color:var(--status-low)}
+.timeline .t-label{font-size:16px;color:var(--cream)}
+.timeline-empty{color:var(--muted);margin-top:20px}
+
+/* Weekly timetable */
+.week-grid{margin-top:34px;display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
+.week-day{border:1px solid var(--line);border-radius:18px;padding:18px 14px;background:rgba(179,164,148,.03);min-height:180px}
+.week-day h4{font:600 11px var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.week-block{font-size:12px;margin-bottom:10px;line-height:1.5}
+.week-block .wb-time{color:var(--muted-dim);font:10px var(--mono);display:block}
+.week-block.focus .wb-label{color:var(--cream)}
+.week-block.rest .wb-label{color:var(--status-low)}
+.week-block.fixed{opacity:.85}
+.week-block.fixed .wb-label{color:var(--status-moderate)}
+.subjects-row{margin-top:24px;display:flex;flex-wrap:wrap;gap:10px}
+.subject-chip{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:8px 14px;border-radius:100px}
+.subject-chip b{color:var(--cream);font-weight:500;margin-right:6px}
+
+/* Genuine empty state for the weekly plan — shown only when the student
+   truly has zero subjects saved yet. Never a placeholder schedule. */
+.plan-empty{
+  margin-top:20px;padding:40px 34px;text-align:center;
+  border:1px dashed var(--line);border-radius:22px;
+}
+.plan-empty p{color:var(--muted);max-width:440px;margin:0 auto 18px}
+
+.subject-manager{
+  margin-top:32px;padding:22px 24px;border-radius:18px;
+  border:1px solid rgba(232,145,107,.22);background:rgba(232,145,107,.03);
+}
+.subject-manager summary{
+  list-style:none;display:flex;justify-content:space-between;align-items:center;
+  font:600 15px var(--sans);color:var(--cream);
+}
+.subject-manager summary::-webkit-details-marker{display:none}
+.subject-manager summary .toggle-icon{font:20px var(--mono);color:var(--coral-light);transition:transform .3s var(--ease)}
+.subject-manager[open] summary .toggle-icon{transform:rotate(45deg)}
+.subject-manager[open]{padding-bottom:24px}
+
+.subject-list{list-style:none;margin:20px 0;padding:0;display:grid;gap:10px}
+.subject-row{
+  border:1px solid var(--line);border-radius:12px;
+  background:rgba(179,164,148,.03);overflow:hidden;
+}
+.subject-display{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 16px;font-size:13px;color:var(--muted);
+}
+.subject-display b{color:var(--cream);font-weight:500;margin-right:8px}
+.subject-actions{display:flex;align-items:center;gap:4px;flex:none}
+.subject-actions form{margin:0}
+.complete-btn{
+  background:none;border:0;color:var(--status-low);font-size:12px;cursor:pointer;
+  padding:6px 10px;border-radius:8px;transition:.2s var(--ease);font-family:var(--sans);font-weight:600;
+}
+.complete-btn:hover{background:rgba(141,181,150,.12)}
+.edit-btn{
+  background:none;border:0;color:var(--muted-dim);font-size:12px;cursor:pointer;
+  padding:6px 10px;border-radius:8px;transition:.2s var(--ease);font-family:var(--sans);
+}
+.edit-btn:hover{color:var(--coral-light);background:rgba(232,145,107,.08)}
+.remove-btn{
+  background:none;border:0;color:var(--muted-dim);font-size:18px;cursor:pointer;
+  line-height:1;padding:4px 9px;border-radius:8px;transition:.2s var(--ease);
+}
+.remove-btn:hover{color:var(--status-high);background:rgba(193,87,63,.1)}
+
+form.subject-edit-form{display:none;padding:0 16px 16px;max-width:none;margin-top:0}
+.subject-row.editing .subject-display{display:none}
+.subject-row.editing form.subject-edit-form{display:grid}
+
+.subject-form{margin-top:22px;display:grid;gap:16px;max-width:560px}
+.checkbox-label{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;font-size:14px!important;color:var(--muted)}
+.checkbox-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--coral)}
+
+/* Day picker — lets a student spread a task's hours across specific
+   days themselves instead of leaving it to the automatic even spread.
+   Only shown (via JS) for flexible tasks over an hour. */
+.day-picker{
+  border:1px solid var(--line);border-radius:12px;
+  padding:14px 14px 12px;margin:0;display:flex;flex-wrap:wrap;gap:8px;
+}
+.day-picker legend{
+  font:600 11px var(--mono);letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted-dim);padding:0 4px;
+}
+.day-check{
+  display:flex!important;flex-direction:row!important;align-items:center;gap:6px;
+  font-size:13px!important;color:var(--muted);
+  border:1px solid var(--line);border-radius:100px;padding:6px 12px;
+  cursor:none;transition:.2s var(--ease);
+}
+.day-check:has(input:checked){
+  color:var(--coral-light);border-color:rgba(232,145,107,.4);background:rgba(232,145,107,.08);
+}
+.day-check input[type=checkbox]{width:14px;height:14px;accent-color:var(--coral)}
+.day-picker-hint{font-size:12px;color:var(--muted-dim);margin:0}
+
+.recovery-pref-form{margin-top:28px;padding-top:22px;border-top:1px solid var(--line);max-width:420px}
+.recovery-pref-form>label{font-size:13px;color:var(--muted);display:grid;gap:9px}
+.recovery-pref-row{display:flex;align-items:center;gap:10px}
+.recovery-pref-row input{
+  width:90px;background:rgba(12,9,7,.7);border:1px solid var(--line);border-radius:14px;
+  padding:15px 16px;color:var(--cream);font:15px var(--sans);outline:none;transition:.25s var(--ease);
+}
+.recovery-pref-row input:focus{border-color:rgba(232,145,107,.55);box-shadow:0 0 0 4px rgba(232,145,107,.08)}
+.recovery-pref-unit{color:var(--muted-dim);font-size:13px}
+.recovery-pref-note{color:var(--muted-dim);font-size:12px;line-height:1.6;margin:12px 0 0}
+
+/* Trend chart — one continuous hand-built SVG line chart (Apple Health
+   style), horizontally scrollable, centered on the page when it fits. */
+.chart-wrap{margin-top:30px;position:relative}
+.chart-legend{display:flex;gap:22px;margin-bottom:6px}
+.chart-legend span{display:flex;align-items:center;gap:8px;font:12px var(--mono);color:var(--muted)}
+.chart-legend .dot{width:7px;height:7px;border-radius:50%}
+.chart-legend .study{background:var(--coral)}
+.chart-legend .sleep{background:var(--status-low)}
+.chart-legend .mood{background:var(--coral-light)}
+.trend-svg path.line{fill:none;stroke-width:2;transition:stroke-width .2s}
+.trend-svg path.study{stroke:var(--coral)}
+.trend-svg path.sleep{stroke:var(--status-low)}
+.trend-svg path.mood{stroke:var(--coral-light)}
+.trend-svg path.area{opacity:.06}
+.trend-svg .gridline{stroke:var(--line-soft);stroke-width:1}
+.trend-svg .axis-label{fill:var(--muted-dim);font:10px var(--mono)}
+.trend-svg circle.pt{opacity:0;transition:opacity .15s}
+.trend-svg circle.pt.show{opacity:1}
+
+.chart-scroll{
+  overflow-x:auto;overflow-y:hidden;
+  padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+}
+.chart-scroll::-webkit-scrollbar{height:6px}
+.chart-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px}
+.chart-scroll svg{display:block;margin:0 auto}
+
+/* Statistics — styled as the same floating-card language used on the
+   landing page's hero preview: a rounded dark card with a label+pill
+   head and right-aligned stat rows separated by hairlines. */
+.stats-card{
+  max-width:var(--content-max);margin:32px auto 0;padding:0 8px;
+}
+.stats-card .floating-card{max-width:none;margin:0}
+.stats-card .fc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0 28px}
+.stats-card .fc-stat-row{flex-direction:column;align-items:flex-start;gap:6px;border-top:0;border-left:1px solid var(--line-soft);padding:0 0 0 22px}
+.stats-card .fc-stat-row:first-child{border-left:0;padding-left:0}
+.stats-card .s-label{font:10px var(--mono);letter-spacing:1.5px;color:var(--muted-dim);text-transform:uppercase}
+.stats-card .s-value{font:500 30px var(--serif);color:var(--cream)}
+.stats-card .s-value small{font:12px var(--mono);color:var(--muted-dim)}
+.stats-card svg{margin-top:6px;display:block}
+.spark-line{fill:none;stroke:var(--coral);stroke-width:1.4;opacity:.75}
+.spark-line.sleep{stroke:var(--status-low)}
+.spark-line.mood{stroke:var(--coral-light)}
+
+/* Quote */
+.quote-block{max-width:var(--content-max);margin:60px auto 0;padding:0 8px;text-align:center}
+.quote-block blockquote{
+  font:italic 400 20px/1.6 var(--serif);color:var(--muted);max-width:560px;margin:0 auto;letter-spacing:.1px;
+  transition:opacity .6s var(--ease);
+}
+.quote-block blockquote:before{content:"\201C"}
+.quote-block blockquote:after{content:"\201D"}
+
+/* History — secondary, collapsible */
+.history-block{max-width:var(--content-max);margin:70px auto 0;padding:0 8px}
+.history-block summary{
+  cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;
+  padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.history-block summary::-webkit-details-marker{display:none}
+.history-block summary h2{font:500 22px var(--serif);margin:0;letter-spacing:-.4px}
+.history-block summary .toggle-icon{font:20px var(--mono);color:var(--muted-dim);transition:transform .3s var(--ease)}
+.history-block[open] summary .toggle-icon{transform:rotate(45deg)}
+.table-wrap{overflow:auto;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted-dim);font:10px var(--mono);letter-spacing:1px;text-transform:uppercase;padding:14px 12px;border-bottom:1px solid var(--line)}
+td{padding:15px 12px;border-bottom:1px solid var(--line-soft);color:var(--muted)}
+.mood-pill{padding:4px 9px;border-radius:8px;background:rgba(179,164,148,.06);font:10px var(--mono)}
+.risk-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px}
+.risk-dot.low{background:var(--status-low)}
+.risk-dot.moderate{background:var(--status-moderate)}
+.risk-dot.high{background:var(--status-high)}
+
+/* Model insights — a small corner badge attached to the main risk card,
+   not a competing block of its own. Deliberately quiet: muted label,
+   small type, only the percentage picks up any color. */
+.model-badge{
+  position:absolute; top:0; right:8px;
+  display:inline-flex; align-items:center; gap:7px;
+  border:1px solid var(--line); border-radius:100px;
+  padding:6px 14px; background:rgba(179,164,148,.04);
+  transition:.2s var(--ease);
+}
+.model-badge:hover{border-color:rgba(232,145,107,.35);background:rgba(232,145,107,.06)}
+.model-badge-label{font:600 10px var(--mono);letter-spacing:1.2px;text-transform:uppercase;color:var(--muted-dim)}
+.model-badge-value{font:600 13px var(--mono);color:var(--coral-light)}
+
+/* Daily logging form itself (shared by the relocated log-today block) */
+.log-form{display:grid;gap:20px}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.log-form fieldset{border:0;padding:4px 0 0;margin:0}
+.log-form legend{font-size:13px;color:var(--muted);margin-bottom:12px}
+.mood-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.mood-row label{display:block!important;text-align:center;cursor:pointer}
+.mood-row input{display:none}
+.mood-row span{
+  display:grid;place-items:center;height:52px;border:1px solid var(--line);border-radius:14px;
+  background:rgba(12,9,7,.5);font:17px var(--mono);color:var(--muted);transition:.25s var(--ease);
+}
+.mood-row label:hover span{border-color:rgba(232,145,107,.4)}
+.mood-row input:checked+span{background:linear-gradient(135deg,var(--coral),var(--coral-light));color:#241a13;border-color:transparent}
+.mood-row small{display:block;margin-top:6px;color:var(--muted-dim);font-size:10px}
+
+/* Research citations — a genuinely low-profile footnote, not a section
+   a casual viewer would notice. Small, muted, easy to miss unless you go
+   looking for it — expands minimally on click. */
+.sources-footnote{max-width:var(--content-max);margin:40px auto 0;padding:0 8px}
+.sources-footnote summary{
+  list-style:none;cursor:pointer;display:inline-flex;
+  font-size:11px;color:var(--muted-dim);letter-spacing:.3px;
+}
+.sources-footnote summary::-webkit-details-marker{display:none}
+.sources-footnote summary:hover{color:var(--muted)}
+.sources-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.sources-list li{
+  font-size:11px;color:var(--muted-dim);line-height:1.6;max-width:640px;
+}
+.sources-list a{color:var(--muted-dim);text-decoration:underline;word-break:break-word}
+.sources-list a:hover{color:var(--coral-light)}
+
+/* =========================================================
+   MODEL INSIGHTS PAGE
+   ========================================================= */
+
+.insight-intro{
+  max-width:var(--content-max);margin:0 auto;padding:0 8px;
+  color:var(--muted);line-height:1.75;font-size:16px;
+}
+.insight-intro b{color:var(--cream);font-weight:500}
+
+.insight-card{
+  max-width:var(--content-max);margin:28px auto 0;padding:36px 32px;
+  border:1px solid var(--line);border-radius:24px;background:rgba(30,24,18,.35);
+}
+.insight-card h2{font:600 26px var(--serif);letter-spacing:-.5px;margin:10px 0 16px}
+.insight-note{color:var(--muted);line-height:1.7;font-size:14px;margin:16px 0 0}
+.insight-note b{color:var(--cream);font-weight:500}
+.insight-note code{font:12px var(--mono);background:rgba(179,164,148,.08);padding:2px 6px;border-radius:6px}
+
+.model-prob-row{display:flex;align-items:center;gap:32px;flex-wrap:wrap;margin-top:16px}
+.model-prob-big{font:600 72px var(--serif);color:var(--cream);line-height:1}
+.model-prob-big span{font-size:28px;color:var(--muted-dim);margin-left:4px}
+.model-prob-row .insight-note{flex:1;min-width:220px}
+
+.insight-inputs{display:flex;gap:14px;flex-wrap:wrap;margin-top:24px}
+.insight-input-chip{
+  border:1px solid var(--line);border-radius:14px;padding:14px 20px;font-size:12px;
+  color:var(--muted-dim);text-transform:uppercase;letter-spacing:1px;background:rgba(179,164,148,.03);
+}
+.insight-input-chip b{display:block;color:var(--cream);font:500 22px var(--serif);margin-top:6px;text-transform:none;letter-spacing:0}
+
+.metrics-table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px}
+.metrics-table th{text-align:left;color:var(--muted-dim);font:10px var(--mono);text-transform:uppercase;letter-spacing:1px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.metrics-table td{padding:12px;border-bottom:1px solid var(--line-soft);color:var(--muted)}
+.metrics-table td.hl{color:var(--cream);font-weight:500}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media(max-width:960px){
+  .shell{width:calc(100% - 40px)}
+  .hero-section{flex-direction:column;align-items:stretch;gap:36px;padding-top:24px}
+  .hero-visual{position:static;transform:none;width:100%;right:auto;top:auto}
+  .floating-card{margin:0 auto}
+  .hero-blend-img{
+    height:46vh;width:100%;object-fit:cover;
+    /* The only place this image gets cropped: fitting a wide landscape
+       photo into a fixed-height mobile band needs it, unlike the desktop
+       layout below where it's free to keep its own full height. */
+    /* Stacked above the copy here instead of behind it, so the strong
+       one-sided fade meant to clear text on the left no longer applies —
+       back to an even fade on both sides, like the top/bottom one. */
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.5) 12%, #000 30%, #000 70%, rgba(0,0,0,.5) 88%, transparent 100%),
+      linear-gradient(to right, transparent 0%, rgba(0,0,0,.6) 10%, #000 26%, #000 74%, rgba(0,0,0,.6) 90%, transparent 100%);
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.5) 12%, #000 30%, #000 70%, rgba(0,0,0,.5) 88%, transparent 100%),
+      linear-gradient(to right, transparent 0%, rgba(0,0,0,.6) 10%, #000 26%, #000 74%, rgba(0,0,0,.6) 90%, transparent 100%);
+  }
+  .signals-row{grid-template-columns:1fr;gap:36px}
+  .signals-row:before{display:none}
+  .adjust-preview{grid-template-columns:1fr;gap:30px}
+  .risk-hero{grid-template-columns:1fr;gap:30px}
+  .orbit-wrap{width:150px;height:150px}
+  .needs-card{grid-template-columns:1fr;gap:30px}
+  .week-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-card .fc-stats{grid-template-columns:1fr;gap:16px}
+  .stats-card .fc-stat-row{border-left:0;padding-left:0;border-top:1px solid var(--line-soft);padding-top:14px}
+  .stats-card .fc-stat-row:first-child{border-top:0;padding-top:0}
+  .input-row{grid-template-columns:1fr}
+  .sleep-time-row{grid-template-columns:1fr}
+  .app-nav{padding:0 20px}
+  .app-nav-link span.link-text{display:none}
+}
+
+@media(max-width:560px){
+  .shell{width:calc(100% - 24px)}
+  .nav{height:76px}
+  .brand{font-size:22px}
+  .ghost-link{display:none}
+  .nav-pill{padding:9px 16px;font-size:13px}
+  .cta-row{flex-direction:column;align-items:flex-start}
+  .hero-section{min-height:80vh}
+  h1.display{letter-spacing:-1.5px}
+  .editorial-section{padding:70px 4px}
+  .week-grid{grid-template-columns:1fr}
+  .auth-card{padding:38px 26px}
+  .auth-brand{left:24px}
+  .needs-visual{min-height:160px}
+  .app-nav-link{padding:9px 10px;font-size:13px}
+  .app-nav-cta{padding:9px 14px;font-size:13px;margin-left:2px}
+  .app-nav-logout{margin-left:8px;font-size:12px}
+  .app-nav-links{gap:2px}
+}

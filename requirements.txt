@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+itsdangerous
+scikit-learn
+joblib
+pandas
+pytest
+psycopg2-binary

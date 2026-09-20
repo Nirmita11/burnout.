@@ -1,0 +1,16 @@
+<!--
+  Persistent app nav — included on every logged-in page (dashboard,
+  model insights). `position:sticky; top:0` in app.css keeps it visible
+  at all times, so "Log Today" is always one click away no matter how
+  far down the page you've scrolled. `active` tells this partial which
+  link to mark current.
+-->
+<nav class="app-nav">
+  <a class="brand" href="/">burnout.</a>
+  <div class="app-nav-links">
+    <a class="app-nav-link{{ ' current' if active == 'dashboard' else '' }}" href="/dashboard"><span class="link-text">Dashboard</span></a>
+    <a class="app-nav-link{{ ' current' if active == 'timetable' else '' }}" href="/dashboard#weekly-plan"><span class="link-text">Timetable</span></a>
+    <a class="app-nav-cta" href="/dashboard#logToday">Log Today</a>
+    <a class="app-nav-logout" href="/logout">Log out</a>
+  </div>
+</nav>

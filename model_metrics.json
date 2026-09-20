@@ -1,0 +1,33 @@
+{
+  "dataset_size": 6000,
+  "test_size": 1200,
+  "accuracy": 0.7333,
+  "no_burnout": {
+    "precision": 0.6753,
+    "recall": 0.6473,
+    "f1": 0.661,
+    "support": 482
+  },
+  "burnout": {
+    "precision": 0.7696,
+    "recall": 0.7911,
+    "f1": 0.7802,
+    "support": 718
+  },
+  "confusion_matrix": [
+    [
+      312,
+      170
+    ],
+    [
+      150,
+      568
+    ]
+  ],
+  "model": "LogisticRegression (scikit-learn, StandardScaler pipeline)",
+  "features": [
+    "study_hours",
+    "sleep_hours",
+    "mood"
+  ]
+}

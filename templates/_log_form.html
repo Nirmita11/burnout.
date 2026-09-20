@@ -1,0 +1,40 @@
+<!--
+  Shared daily log form — used both for a first-time entry and for
+  editing today's already-saved entry. Sleep is captured as bedtime +
+  wake-up clock times rather than a single "hours" number: hours are
+  still derived and stored server-side (see main.py's /log route), so no
+  existing data capability is lost, and the two timestamps are what let
+  the social-jetlag signal work at all.
+-->
+<form method="post" action="/log" class="log-form">
+  <label>Date<input type="date" name="log_date" value="{{ today }}" required></label>
+  <div class="input-row">
+    <label>Study hours<input type="number" name="study_hours" min="0" max="24" step="0.1" placeholder="e.g. 4.5" required></label>
+  </div>
+  <div class="sleep-time-row">
+    <label>Bedtime<input type="time" name="sleep_start" required></label>
+    <label>Wake-up time<input type="time" name="wake_time" required></label>
+  </div>
+  <details class="sleep-why">
+    <summary>Why we ask for both times →</summary>
+    <div class="sleep-why-body">
+      Sleep <em>duration</em> is only half the picture. Research links inconsistent sleep
+      <em>timing</em> — going to bed and waking up at very different times across your week,
+      sometimes called "social jetlag" — to higher burnout and depression risk in college
+      students, independent of how many hours you actually sleep. Bedtime and wake-up time
+      are what let us track that; your total hours are still calculated automatically from
+      the two. See "About the science" further down this page for the full citations.
+    </div>
+  </details>
+  <fieldset>
+    <legend>How's your mood?</legend>
+    <div class="mood-row">
+      <label><input type="radio" name="mood" value="1" required><span>1</span><small>rough</small></label>
+      <label><input type="radio" name="mood" value="2"><span>2</span><small>low</small></label>
+      <label><input type="radio" name="mood" value="3"><span>3</span><small>okay</small></label>
+      <label><input type="radio" name="mood" value="4"><span>4</span><small>good</small></label>
+      <label><input type="radio" name="mood" value="5"><span>5</span><small>great</small></label>
+    </div>
+  </fieldset>
+  <button class="primary-btn full" type="submit">Save today's signal →</button>
+</form>

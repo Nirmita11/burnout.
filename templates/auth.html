@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ "Create account" if mode == "signup" else "Log in" }} — burnout.{% endblock %}
+{% block content %}
+<div class="auth-page" id="main-content">
+  <a class="brand auth-brand" href="/">burnout.</a>
+  <div class="auth-card">
+    <div class="eyebrow">YOUR DAILY SIGNAL</div>
+    <h1>{{ "Start noticing." if mode == "signup" else "Welcome back." }}</h1>
+    <p>{{ "Create a simple space to track the things that change before the pattern becomes obvious." if mode == "signup" else "Your pattern has been waiting." }}</p>
+
+    {% if error %}<div class="error" data-auto-hide>{{ error }}</div>{% endif %}
+
+    <form method="post" action="{{ '/signup' if mode == 'signup' else '/login' }}">
+      <label>Email<input type="email" name="email" placeholder="you@example.com" required></label>
+      <label>Password<input type="password" name="password" placeholder="••••••••" minlength="6" required></label>
+      <button class="primary-btn full" type="submit">{{ "Create account →" if mode == "signup" else "Log in →" }}</button>
+    </form>
+
+    <div class="auth-foot">
+      {% if mode == "signup" %}Already have an account? <a href="/login">Log in</a>
+      {% else %}New here? <a href="/signup">Create an account</a>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}burnout.{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css?v={{ css_version }}">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<!--
+  Atmosphere: Warm Charcoal — a single soft amber/coral glow drifting in
+  from the upper-left over a warm charcoal-brown base, plus a scatter of
+  low-opacity line-art motifs (coffee cup, plant sprig, open book, candle,
+  glasses, pencil) pulled from the cozy study-space reference photos, so
+  the background reads as a lived-in study space rather than a flat
+  spotlight. Nothing here is regenerated or reseeded — only static shapes
+  animated via CSS transform.
+-->
+<div class="warm-bg" aria-hidden="true">
+  <div class="warm-motifs">
+    <!-- coffee cup + steam -->
+    <div class="warm-motif" style="top:12%;left:6%;width:64px;height:64px;--dur:6.5s;--delay:0s">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M14 26h30v14a10 10 0 0 1-10 10H24a10 10 0 0 1-10-10V26z"/>
+        <path d="M44 30h4a6 6 0 0 1 0 12h-4"/>
+        <path d="M22 20c0-3 3-3 3-6s-3-3-3-6M31 20c0-3 3-3 3-6s-3-3-3-6"/>
+      </svg>
+    </div>
+    <!-- plant / leaf sprig -->
+    <div class="warm-motif" style="top:68%;left:4%;width:54px;height:54px;--dur:7.5s;--delay:1.4s">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M32 58V26"/>
+        <path d="M32 34c0-10-8-16-18-16 0 10 8 16 18 16z"/>
+        <path d="M32 26c0-10 8-16 18-16 0 10-8 16-18 16z"/>
+      </svg>
+    </div>
+    <!-- open book -->
+    <div class="warm-motif" style="top:20%;right:6%;width:60px;height:60px;--dur:6.8s;--delay:.7s">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M32 20c-5-4-13-6-20-4v32c7-2 15 0 20 4"/>
+        <path d="M32 20c5-4 13-6 20-4v32c-7-2-15 0-20 4"/>
+        <path d="M32 20v32"/>
+      </svg>
+    </div>
+    <!-- candle + flame -->
+    <div class="warm-motif" style="top:74%;right:9%;width:44px;height:56px;--dur:5.5s;--delay:.3s">
+      <svg viewBox="0 0 44 56" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M17 12h10v34a5 5 0 0 1-5 5 5 5 0 0 1-5-5V12z"/>
+        <path d="M22 2c3 3 4 5 4 7a4 4 0 0 1-8 0c0-2 1-4 4-7z"/>
+      </svg>
+    </div>
+    <!-- glasses -->
+    <div class="warm-motif" style="top:42%;left:2%;width:56px;height:32px;--dur:7s;--delay:1.9s">
+      <svg viewBox="0 0 64 36" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="16" cy="18" r="13"/>
+        <circle cx="48" cy="18" r="13"/>
+        <path d="M29 16h6"/>
+        <path d="M3 14 0 10M61 14l3-4"/>
+      </svg>
+    </div>
+    <!-- pencil -->
+    <div class="warm-motif" style="top:48%;right:3%;width:52px;height:52px;--dur:6.2s;--delay:2.4s">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M12 52 44 20l8 8-32 32H12v-8z"/>
+        <path d="M38 26l8 8"/>
+      </svg>
+    </div>
+  </div>
+</div>
+<div class="noise" aria-hidden="true"></div>
+
+{% block appnav %}{% endblock %}
+{% block content %}{% endblock %}
+<script>
+document.querySelectorAll("[data-auto-hide]").forEach(el => {
+  setTimeout(() => el.classList.add("hide"), 3200);
+});
+
+// Gentle scroll-reveal for any element marked .reveal
+const revealTargets = document.querySelectorAll(".reveal");
+if (revealTargets.length) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealTargets.forEach(el => io.observe(el));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const cursor = document.createElement("div");
+    cursor.id = "customCursor";
+    document.body.appendChild(cursor);
+
+    document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+    });
+    document.addEventListener("mousedown", () => {
+        cursor.style.width = "28px";
+        cursor.style.height = "28px";
+    });
+    document.addEventListener("mouseup", () => {
+        cursor.style.width = "18px";
+        cursor.style.height = "18px";
+    });
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

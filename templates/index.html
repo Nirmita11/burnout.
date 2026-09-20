@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}burnout. — notice the pattern before it becomes a crash{% endblock %}
+{% block content %}
+<div class="shell" id="main-content">
+  <nav class="nav">
+    <a class="brand" href="/">burnout.</a>
+    <div class="nav-right">
+      {% if user %}
+        <a class="ghost-link" href="/dashboard">Dashboard</a>
+        <a class="nav-pill" href="/logout">Log out</a>
+      {% else %}
+        <a class="ghost-link" href="/login">Log in</a>
+        <a class="nav-pill" href="/signup">Get started</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- SECTION 1 — Burnout doesn't arrive. It accumulates. -->
+  <section class="editorial-section hero-section">
+    <div class="hero-visual" aria-hidden="true">
+      <img class="hero-blend-img" src="/static/images/hero-desk.jpg" alt="">
+    </div>
+
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="pulse"></span> STUDENT WELLBEING · EARLY SIGNALS</div>
+      <h1 class="display">Burnout doesn't arrive.<br><em>It accumulates.</em></h1>
+      <p class="lede">Your study hours, sleep and mood tell a story. See the pattern before it becomes a crash.</p>
+      <div class="cta-row">
+        {% if user %}
+          <a class="primary-btn" href="/dashboard">Open dashboard →</a>
+        {% else %}
+          <a class="primary-btn" href="/signup">Start tracking →</a>
+          <a class="text-link" href="#how-it-works">See how it works →</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 — The pattern -->
+  <section class="editorial-section" id="how-it-works">
+    <div class="section-kicker reveal">THE PATTERN</div>
+    <h2 class="display reveal" style="font-size:clamp(30px,4.6vw,54px);margin-top:20px">Three signals,<br><em>one changing shape.</em></h2>
+
+    <div class="signals-row">
+      <div class="signal-node study reveal">
+        <div class="dot"></div>
+        <h3>Study</h3>
+        <p>How much you're working — and whether it's quietly climbing.</p>
+      </div>
+      <div class="signal-node sleep reveal">
+        <div class="dot"></div>
+        <h3>Sleep</h3>
+        <p>The recovery time that tends to shrink first, and gets noticed last.</p>
+      </div>
+      <div class="signal-node mood reveal">
+        <div class="dot"></div>
+        <h3>Mood</h3>
+        <p>The signal that usually confirms what the other two already showed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 — The signal -->
+  <section class="editorial-section compact">
+    <div class="section-kicker reveal">THE SIGNAL</div>
+    <div class="statement-block reveal">
+      <p class="big-line">Your numbers aren't the story.<br><strong>The pattern is.</strong></p>
+    </div>
+  </section>
+
+  <!-- SECTION 4 — The adjustment -->
+  <section class="editorial-section compact">
+    <div class="section-kicker reveal">THE ADJUSTMENT</div>
+    <h2 class="display reveal" style="font-size:clamp(30px,4.6vw,54px);margin-top:20px">Don't study harder.<br><em>Study differently.</em></h2>
+
+    <div class="adjust-preview reveal">
+      <p class="lede" style="margin:0">When the pattern shifts, the plan shifts with it — shorter intensive blocks, more real recovery, and lower total load until the signal settles.</p>
+      <div class="mini-timeline">
+        <div><b>DEEP WORK</b><span>Mathematics · 45 min</span></div>
+        <div><b>RESET</b><span>15 minute break</span></div>
+        <div><b>FOCUSED</b><span>Database Systems · 30 min</span></div>
+        <div><b>OFFLINE</b><span>Recovery, no screens</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 — Final CTA -->
+  <section class="editorial-section final-cta compact">
+    <div class="section-kicker reveal" style="text-align:center">NOTICE EARLY</div>
+    <h2 class="reveal">Notice the pattern<br><em>before it becomes a crash.</em></h2>
+    <div class="cta-row reveal">
+      {% if user %}
+        <a class="primary-btn" href="/dashboard">Open dashboard →</a>
+      {% else %}
+        <a class="primary-btn" href="/signup">Start tracking →</a>
+        <a class="text-link" href="/login">Log in →</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <footer class="footer">burnout. · notice earlier · adjust sooner</footer>
+</div>
+{% endblock %}

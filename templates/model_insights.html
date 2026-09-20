@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Model Insights — burnout.{% endblock %}
+{% block appnav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<div class="shell dashboard-shell" id="main-content">
+  <header class="dash-head">
+    <div class="context-line">SECONDARY SIGNAL · EXPERIMENTAL</div>
+    <h1>Model Insights.</h1>
+  </header>
+
+  <div class="section-block" style="margin-top:8px">
+    <p class="insight-intro">
+      Your dashboard's main risk score comes from an explainable rule-based engine that looks at
+      how your <b>14-day pattern</b> is changing. This page is something different: a separate
+      machine-learning model's independent guess, based on <b>today's numbers alone</b>. It doesn't
+      see trends, deltas, or history — just one day's study/sleep/mood. Treat it as a second opinion,
+      not a more authoritative one.
+    </p>
+  </div>
+
+  <!-- TODAY'S MODEL ESTIMATE -->
+  <section class="insight-card reveal">
+    <span class="mini-label">TODAY'S MODEL ESTIMATE</span>
+    {% if latest and ml_probability is not none %}
+      <div class="model-prob-row">
+        <div class="model-prob-big">{{ (ml_probability * 100) | round | int }}<span>%</span></div>
+        <p class="insight-note" style="margin-top:0">
+          Independent probability estimate from a LogisticRegression model — shown separately from,
+          and not competing with, the primary risk score on your dashboard.
+        </p>
+      </div>
+      <div class="insight-inputs">
+        <div class="insight-input-chip">Study<b>{{ latest.study_hours }}h</b></div>
+        <div class="insight-input-chip">Sleep<b>{{ latest.sleep_hours }}h</b></div>
+        <div class="insight-input-chip">Mood<b>{{ latest.mood }}/5</b></div>
+      </div>
+      <p class="insight-note">
+        These three numbers from <b>{{ latest.log_date }}</b> are the only inputs this model sees —
+        unlike the main risk engine, it has no idea whether your study time has been rising or your
+        sleep has been slipping over the past two weeks.
+      </p>
+    {% else %}
+      <p class="insight-note">Log at least one day to see a model estimate here.</p>
+    {% endif %}
+  </section>
+
+  <!-- HOW THIS MODEL WORKS -->
+  <section class="insight-card reveal">
+    <span class="mini-label">HOW THIS MODEL WORKS</span>
+    <h2>Trained on synthetic data, not your data.</h2>
+    <p class="insight-note">
+      This model was trained once, offline, on a synthetic dataset of student-days generated to
+      follow a realistic pattern — rising study hours combined with falling sleep and mood pushes
+      the burnout probability up, with random noise mixed in so it isn't a clean lookup table.
+      It's a <b>{{ metrics.model if metrics else "LogisticRegression (scikit-learn)" }}</b> model,
+      and it never trains on your personal logs — your daily entries only ever feed the rule-based
+      engine on the dashboard.
+    </p>
+
+    {% if metrics %}
+      <table class="metrics-table">
+        <thead>
+          <tr><th>Metric</th><th>No burnout</th><th>Burnout</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Precision</td><td class="hl">{{ metrics.no_burnout.precision }}</td><td class="hl">{{ metrics.burnout.precision }}</td></tr>
+          <tr><td>Recall</td><td class="hl">{{ metrics.no_burnout.recall }}</td><td class="hl">{{ metrics.burnout.recall }}</td></tr>
+          <tr><td>F1 score</td><td class="hl">{{ metrics.no_burnout.f1 }}</td><td class="hl">{{ metrics.burnout.f1 }}</td></tr>
+          <tr><td>Support (test set)</td><td>{{ metrics.no_burnout.support }}</td><td>{{ metrics.burnout.support }}</td></tr>
+        </tbody>
+      </table>
+      <p class="insight-note">
+        Overall test accuracy: <b>{{ (metrics.accuracy * 100) | round(1) }}%</b>
+        — trained on {{ metrics.dataset_size }} synthetic student-days, evaluated on a held-out
+        {{ metrics.test_size }}-day test split. These numbers come directly from the last
+        <code>train_model.py</code> run, not estimates.
+      </p>
+    {% else %}
+      <p class="insight-note">No training metrics found yet — run <code>python train_model.py</code> to generate them.</p>
+    {% endif %}
+  </section>
+
+  <footer class="footer">burnout. · notice earlier · adjust sooner</footer>
+</div>
+{% endblock %}

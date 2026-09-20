@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — burnout.{% endblock %}
+{% block appnav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<div class="shell dashboard-shell" id="main-content">
+  {% if request.query_params.get("saved") %}
+    <div class="toast" data-auto-hide>Signal saved ✓</div>
+  {% endif %}
+  {% if request.query_params.get("updated") %}
+    <div class="toast" data-auto-hide>Plan updated ✓</div>
+  {% endif %}
+  {% if request.query_params.get("completed") %}
+    <div class="toast" data-auto-hide>Marked complete ✓</div>
+  {% endif %}
+
+  <header class="dash-head">
+    <div class="context-line">{{ greeting }} · {{ today_label }}</div>
+    <h1>
+      {% if not has_data %}Your story starts here.
+      {% elif risk.level == "Low" %}Your rhythm looks steady.
+      {% elif risk.level == "Moderate" %}Your workload is starting to catch up with you.
+      {% else %}Your recent pattern needs a lighter pace.
+      {% endif %}
+    </h1>
+  </header>
+
+  {% if not has_data %}
+    <div class="empty-state reveal in">
+      <div class="orb-small"></div>
+      <h2>Your story starts here.</h2>
+      <p>Log today's study, sleep and mood to begin seeing your pattern. It takes less than a minute.</p>
+    </div>
+
+    <!-- DAILY LOGGING — first-ever entry -->
+    <section class="log-today-block" id="logToday">
+      <div class="log-today-card pending">
+        <span class="mini-label">DAILY CHECK-IN</span>
+        <h2>Log today's signals.</h2>
+        <p>Less than a minute — study, sleep timing, and how it felt.</p>
+        {% include "_log_form.html" %}
+      </div>
+    </section>
+  {% else %}
+    {% set tone = risk.level|lower %}
+
+    <!-- 1. HEADLINE + PRIMARY RISK SIGNAL -->
+    <section class="risk-hero reveal">
+      {% if ml_probability is not none %}
+        <a class="model-badge" href="/model-insights" title="Secondary, independent ML estimate — see Model Insights">
+          <span class="model-badge-label">Model</span>
+          <span class="model-badge-value">{{ (ml_probability * 100) | round | int }}%</span>
+        </a>
+      {% endif %}
+      <div class="orbit-wrap">
+        <svg viewBox="0 0 200 200">
+          <circle class="orbit-track" cx="100" cy="100" r="90"></circle>
+          <circle class="orbit-progress {{ tone }}" id="orbitProgress" cx="100" cy="100" r="90" data-score="{{ risk.score }}"></circle>
+        </svg>
+        <div class="orbit-center">
+          <strong id="orbitScore">0</strong>
+          <span>/ 100</span>
+        </div>
+      </div>
+
+      <div class="risk-copy">
+        <div class="risk-level-tag {{ tone }}">{{ risk.level }} risk</div>
+
+        {% if today_desc %}
+        <p class="today-line {{ today_desc.tone }}"><span class="today-tag">TODAY</span> {{ today_desc.text }}</p>
+        {% endif %}
+
+        <h2 class="risk-headline">
+          <span class="trend-tag">30-DAY TREND</span>
+          {% if risk.reasons %}{{ risk.reasons[0] }}{% elif risk.good_reset %}{{ risk.good_reset }}{% else %}Your recent numbers are staying in a healthy range.{% endif %}
+        </h2>
+
+        {% if risk.jetlag_reason %}
+          <p class="risk-why">{{ risk.jetlag_reason }}</p>
+        {% endif %}
+        {% if risk.good_reset and risk.reasons %}
+          <p class="risk-why positive">{{ risk.good_reset }}</p>
+        {% endif %}
+
+        <div class="noticing">
+          <span class="mini-label">WHAT WE'RE NOTICING</span>
+          <div class="noticing-row">
+            <div class="notice-chip {{ 'risk' if risk.study_delta > 0 else ('positive' if risk.study_delta < 0 else '') }}">
+              <span class="arrow">{{ '↑' if risk.study_delta > 0 else ('↓' if risk.study_delta < 0 else '→') }}</span>
+              <span>Study {{ "%+d"|format(risk.study_pct) }}%</span>
+            </div>
+            <div class="notice-chip {{ 'risk' if risk.sleep_delta < 0 else ('positive' if risk.sleep_delta > 0 else '') }}">
+              <span class="arrow">{{ '↓' if risk.sleep_delta < 0 else ('↑' if risk.sleep_delta > 0 else '→') }}</span>
+              <span>Sleep {{ "%+.1f"|format(risk.sleep_delta) }}h</span>
+            </div>
+            <div class="notice-chip {{ 'risk' if risk.mood_delta < 0 else ('positive' if risk.mood_delta > 0 else '') }}">
+              <span class="arrow">{{ '↓' if risk.mood_delta < 0 else ('↑' if risk.mood_delta > 0 else '→') }}</span>
+              <span>Mood {{ "%+.1f"|format(risk.mood_delta) }}</span>
+            </div>
+            {% if risk.social_jetlag is not none %}
+            <div class="notice-chip {{ 'risk' if risk.social_jetlag >= jetlag_threshold else '' }}">
+              <span class="arrow">{{ '⚠' if risk.social_jetlag >= jetlag_threshold else '≈' }}</span>
+              <span>Sleep timing ±{{ "%.1f"|format(risk.social_jetlag) }}h</span>
+            </div>
+            {% endif %}
+            {% if risk.good_reset %}
+            <div class="notice-chip positive">
+              <span class="arrow">↻</span>
+              <span>Good reset</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. SUGGESTED ADJUSTMENT -->
+    <section class="needs-card reveal">
+      <div>
+        <span class="mini-label">WHAT YOUR DAY NEEDS</span>
+        {% if risk.level == "High" %}
+          <h2>A little more space.</h2>
+          <p>Your study time has been increasing while recovery has been shrinking. Today's plan has shorter intensive blocks and more recovery time.</p>
+        {% elif risk.level == "Moderate" %}
+          <h2>A slightly lighter load.</h2>
+          <p>Your workload has been climbing faster than your recovery. Today trades one heavy block for a real break.</p>
+        {% else %}
+          <h2>Keep the rhythm.</h2>
+          <p>Your current pattern looks sustainable. Protect the sleep and breaks you already have rather than filling every free hour.</p>
+        {% endif %}
+        <a class="text-link" href="#schedule">View today's plan →</a>
+      </div>
+      <div class="needs-visual">
+        <span class="tag">Study load · last 7 days</span>
+        <div class="load-bars" aria-hidden="true">
+          {% for r in rows[-7:] %}
+            <i style="height:{{ [((r.study_hours / 10 * 100) | round | int), 8] | max }}%"></i>
+          {% endfor %}
+        </div>
+        <p class="load-caption">{{ risk.avg_study }}h average · {{ "%+.1f"|format(risk.study_delta) }}h recent shift</p>
+      </div>
+    </section>
+
+    <!-- 3. LOG TODAY — relocated near the top since this is the single
+         most frequent action a student takes here; previously required
+         scrolling to the very bottom of the page every day. -->
+    <section class="log-today-block" id="logToday">
+      {% if logged_today %}
+        {% set today_row = rows[-1] %}
+        <div class="log-today-card">
+          <span class="mini-label">DAILY CHECK-IN</span>
+          <h2>Nice — today's entry is in.</h2>
+          <p>{{ today_row.study_hours }}h study · {{ today_row.sleep_hours }}h sleep · mood {{ today_row.mood }}/5</p>
+
+          {% if streak >= 3 %}
+            <p class="streak-note">🔥 {{ streak }}-day streak — you're building real consistency.</p>
+          {% elif streak == 2 %}
+            <p class="streak-note">Two days in a row — you're almost at a streak.</p>
+          {% endif %}
+
+          <details class="log-today-edit">
+            <summary>Update today's entry →</summary>
+            {% include "_log_form.html" %}
+          </details>
+        </div>
+      {% else %}
+        <div class="log-today-card pending">
+          <span class="mini-label">DAILY CHECK-IN</span>
+          <h2>Add today's entry.</h2>
+          <p>Less than a minute — study, sleep timing, and how it felt.</p>
+          {% include "_log_form.html" %}
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- 4. STAT CARDS — reuses the same floating-card visual language as
+         the landing page's "THIS WEEK" preview, so the app feels like one
+         design system rather than a different look per page. -->
+    <section class="stats-card">
+      <div class="floating-card">
+        <div class="fc-head">
+          <span class="fc-label">30-DAY AVERAGES</span>
+          <span class="fc-pill">{{ risk.level }} risk</span>
+        </div>
+        <div class="fc-stats">
+          <div class="fc-stat-row">
+            <span class="s-label">Study</span>
+            <div class="s-value">{{ risk.avg_study }}<small> hrs</small></div>
+            <svg width="90" height="26" id="sparkStudy" aria-hidden="true"></svg>
+          </div>
+          <div class="fc-stat-row">
+            <span class="s-label">Sleep</span>
+            <div class="s-value">{{ risk.avg_sleep }}<small> hrs</small></div>
+            <svg width="90" height="26" id="sparkSleep" aria-hidden="true"></svg>
+          </div>
+          <div class="fc-stat-row">
+            <span class="s-label">Mood</span>
+            <div class="s-value">{{ risk.avg_mood }}<small> /5</small></div>
+            <svg width="90" height="26" id="sparkMood" aria-hidden="true"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. TODAY'S SCHEDULE — real day-0 slice of the same weekly_plan
+         below, not a separate hardcoded-by-risk-level template. The dot
+         on each item is a purely local "I did this today" toggle (just
+         a glow, see the script at the bottom of this file) — it does
+         NOT touch the subject or the plan. Actually marking a subject
+         done/complete only happens from the list below, in Manage
+         Subjects & Commitments. -->
+    <section class="section-block" id="schedule">
+      <div class="card-head">
+        <div><span class="mini-label">TODAY'S SCHEDULE</span><h2>Shaped by today's signal.</h2></div>
+      </div>
+      {% if today_schedule and today_schedule.blocks %}
+        <div class="timeline">
+          {% for block in today_schedule.blocks %}
+            {% set kind = block[3] %}
+            <div class="t-item {{ 'rest' if kind == 'rest' else '' }}">
+              <button type="button" class="t-dot" data-t-dot aria-label="Mark '{{ block[2] }}' done for today" aria-pressed="false"></button>
+              <div class="t-time">{{ block[0] }}–{{ block[1] }}</div>
+              <div class="t-kind">{{ {"focus": "Focused", "fixed": "Fixed", "rest": "Recovery"}.get(kind, kind) }}</div>
+              <div class="t-label">{{ block[2] }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="timeline-empty">
+          {% if weekly_plan.empty %}Nothing scheduled yet — add your subjects below and today's plan fills in here.
+          {% else %}Nothing scheduled for today specifically — see the week ahead below.
+          {% endif %}
+        </p>
+      {% endif %}
+    </section>
+
+    <!-- WEEKLY TIMETABLE -->
+    <section class="section-block" id="weekly-plan">
+      <div class="card-head">
+        <div><span class="mini-label">WEEKLY PLAN</span><h2>The week ahead.</h2></div>
+      </div>
+
+      {% if weekly_plan.empty %}
+        <div class="plan-empty">
+          <p>You haven't added any subjects or commitments yet, so there's no week to build. Add your first one below and this section fills in immediately.</p>
+          <a class="text-link" href="#subjectManager">+ Add your first subject →</a>
+        </div>
+      {% else %}
+        <div class="week-grid">
+          {% for d in weekly_plan.days %}
+            <div class="week-day">
+              <h4>{{ d.day[:3] }}</h4>
+              {% for block in d.blocks %}
+                <div class="week-block {{ block[3] }}">
+                  <span class="wb-time">{{ block[0] }}–{{ block[1] }}</span>
+                  <span class="wb-label">{{ block[2] }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="subjects-row">
+          {% for s in weekly_plan.subjects %}
+            <span class="subject-chip"><b>{{ s.name }}</b>{{ s.deadline }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- SUBJECT MANAGER — real inputs driving the plan above. Stays open
+           right after any add/edit/delete (the ?updated=1 redirect flag),
+           or when there's nothing yet to manage, so the full running list
+           is always what the student sees next, never a panel that
+           appears to have reset or emptied. -->
+      <details class="subject-manager" id="subjectManager"{{ ' open' if (weekly_plan.empty or request.query_params.get('updated') or request.query_params.get('completed')) else '' }}>
+        <summary>
+          <span>{{ '+ Add your subjects & commitments' if weekly_plan.empty else 'Manage subjects & commitments' }}</span>
+          <span class="toggle-icon">+</span>
+        </summary>
+
+        {% if subjects %}
+          <ul class="subject-list">
+            {% for s in subjects %}
+              <li class="subject-row">
+                <div class="subject-display">
+                  <span>
+                    <b>{{ s.name }}</b>
+                    {% if s.is_fixed %}Fixed · {{ s.fixed_day }} {{ s.fixed_time }}
+                    {% else %}{{ s.estimated_hours }}h/week{% if s.deadline_date %} · due {{ s.deadline_date }}{% endif %}
+                    {% endif %}
+                  </span>
+                  <div class="subject-actions">
+                    <form method="post" action="/timetable/subjects/{{ s.id }}/complete">
+                      <button type="submit" class="complete-btn" aria-label="Mark {{ s.name }} complete">✓ Done</button>
+                    </form>
+                    <button type="button" class="edit-btn" data-edit-toggle>Edit</button>
+                    <form method="post" action="/timetable/subjects/{{ s.id }}/delete">
+                      <button type="submit" class="remove-btn" aria-label="Remove {{ s.name }}">×</button>
+                    </form>
+                  </div>
+                </div>
+                <form method="post" action="/timetable/subjects/{{ s.id }}/edit" class="subject-form subject-edit-form" data-subject-form>
+                  <div class="input-row">
+                    <label>Subject / task<input type="text" name="name" value="{{ s.name }}" required></label>
+                    <label>Hours needed this week<input type="number" name="estimated_hours" min="0.25" max="40" step="0.25" value="{{ s.estimated_hours }}" required data-hours-input></label>
+                  </div>
+                  <div class="input-row">
+                    <label>Deadline (optional)<input type="date" name="deadline_date" value="{{ s.deadline_date or '' }}"></label>
+                    <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" {{ 'checked' if s.is_fixed else '' }} data-fixed-check> This is a fixed commitment</label>
+                  </div>
+                  <div class="input-row">
+                    <label>Day<select name="fixed_day">
+                      {% for d in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
+                        <option value="{{ d }}"{{ ' selected' if s.fixed_day == d else '' }}>{{ d }}</option>
+                      {% endfor %}
+                    </select></label>
+                    <label>Time<input type="time" name="fixed_time" value="{{ s.fixed_time or '09:00' }}"></label>
+                  </div>
+                  {% set pref = (s.preferred_days or '').split(',') %}
+                  <fieldset class="day-picker" data-day-picker hidden>
+                    <legend>Spread across specific days (optional)</legend>
+                    {% for d in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
+                      <label class="day-check"><input type="checkbox" name="preferred_days" value="{{ d }}"{{ ' checked' if d in pref else '' }}> {{ d[:3] }}</label>
+                    {% endfor %}
+                  </fieldset>
+                  <p class="day-picker-hint">Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.</p>
+                  <button class="primary-btn full" type="submit">Save changes →</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <form method="post" action="/timetable/subjects" class="subject-form" data-subject-form>
+          <div class="input-row">
+            <label>Subject / task<input type="text" name="name" placeholder="e.g. Mathematics" required></label>
+            <label>Hours needed this week<input type="number" name="estimated_hours" min="0.25" max="40" step="0.25" placeholder="e.g. 3" required data-hours-input></label>
+          </div>
+          <div class="input-row">
+            <label>Deadline (optional)<input type="date" name="deadline_date"></label>
+            <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" id="isFixedCheck" data-fixed-check> This is a fixed commitment</label>
+          </div>
+          <div class="input-row">
+            <label>Day<select name="fixed_day">
+              <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option><option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select></label>
+            <label>Time<input type="time" name="fixed_time" value="09:00"></label>
+          </div>
+          <fieldset class="day-picker" data-day-picker hidden>
+            <legend>Spread across specific days (optional)</legend>
+            {% for d in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
+              <label class="day-check"><input type="checkbox" name="preferred_days" value="{{ d }}"> {{ d[:3] }}</label>
+            {% endfor %}
+          </fieldset>
+          <p class="day-picker-hint">Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.</p>
+          <button class="primary-btn full" type="submit">Add to plan →</button>
+        </form>
+
+        <form method="post" action="/preferences/recovery" class="recovery-pref-form">
+          <label>
+            How long do you like your recovery breaks?
+            <span class="recovery-pref-row">
+              <input type="number" name="recovery_minutes" min="15" max="90" step="15"
+                     placeholder="e.g. 15" value="{{ user.recovery_minutes or '' }}">
+              <span class="recovery-pref-unit">minutes</span>
+              <button class="nav-pill" type="submit">Save</button>
+            </span>
+          </label>
+          <p class="recovery-pref-note">
+            {% if user.recovery_minutes %}
+              Used as your Low-risk baseline ({{ user.recovery_minutes }} min) — Moderate and High risk still lengthen it further. Rounds to the nearest 15 minutes so your schedule stays on clean times.
+            {% else %}
+              Not set — the plan currently defaults to a 15-minute baseline. Rounds to the nearest 15 minutes.
+            {% endif %}
+          </p>
+        </form>
+      </details>
+    </section>
+
+    <!-- 6. TREND — one continuous SVG line chart, scrolls horizontally like
+         Apple Health's weekly view (not separate day boxes). Labeled with
+         the actual number of days shown, not a hardcoded count — it grows
+         day by day as more gets logged, up to the 30-day cap fetched above. -->
+    <section class="section-block">
+      <div class="card-head">
+        <div><span class="mini-label">THE LAST {{ rows|length }} DAY{{ 'S' if rows|length != 1 else '' }}</span><h2>What's changing.</h2></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-legend">
+          <span><i class="dot study"></i> Study</span>
+          <span><i class="dot sleep"></i> Sleep</span>
+          <span><i class="dot mood"></i> Mood</span>
+        </div>
+        <div class="chart-scroll" id="chartScroll">
+          <svg class="trend-svg" id="trendSvg" viewBox="0 0 900 240" width="900" height="240" role="img" aria-label="Line chart of study hours, sleep hours and mood over the last {{ rows|length }} days"></svg>
+        </div>
+      </div>
+    </section>
+
+    <div class="quote-block">
+      <blockquote id="quoteText">Small, steady choices are what recovery is made of.</blockquote>
+    </div>
+
+    <!-- 7. HISTORY — lowest priority, pure reference -->
+    <details class="history-block">
+      <summary>
+        <h2>{{ rows|length }}-day history</h2>
+        <span class="toggle-icon">+</span>
+      </summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Study</th><th>Sleep</th><th>Mood</th><th>Signal</th></tr></thead>
+          <tbody>
+          {% for row in rows|reverse %}
+            {% set dr = row["day_risk"] %}
+            <tr>
+              <td>{{ row["log_date"] }}</td>
+              <td>{{ row["study_hours"] }}h</td>
+              <td>{{ row["sleep_hours"] }}h</td>
+              <td><span class="mood-pill">{{ row["mood"] }}/5</span></td>
+              <td><span class="risk-dot {{ dr|lower }}"></span>{{ 'Needs attention' if dr == 'High' else ('Watching' if dr == 'Moderate' else 'Steady') }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  {% endif %}
+
+  <!-- Sources footnote — kept genuinely low-profile (a small expandable,
+       not a titled section) so this logic is never presented as if we
+       invented it ourselves, without competing for attention. -->
+  <details class="sources-footnote">
+    <summary>ⓘ Sources</summary>
+    <ul class="sources-list">
+      {% for src in sleep_sources %}
+        <li>{{ src.label }} — <a href="{{ src.url }}" target="_blank" rel="noopener">{{ src.url }}</a></li>
+      {% endfor %}
+    </ul>
+  </details>
+
+  <footer class="footer">burnout. · notice earlier · adjust sooner</footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if has_data %}
+<script>
+const rows = {{ rows | tojson }};
+
+// ---- Orbit score animation ----
+const orbitCircle = document.getElementById("orbitProgress");
+const orbitScoreEl = document.getElementById("orbitScore");
+const score = parseFloat(orbitCircle.dataset.score) || 0;
+const CIRC = 565.5;
+requestAnimationFrame(() => {
+  orbitCircle.style.strokeDashoffset = (CIRC - (CIRC * score) / 100).toFixed(1);
+});
+(function animateCount(){
+  const duration = 1400, start = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now - start) / duration);
+    orbitScoreEl.textContent = Math.round(p * score);
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ---- Hand-built SVG trend chart (study / sleep / mood) ----
+(function drawTrend(){
+  const svg = document.getElementById("trendSvg");
+  if (!svg || !rows.length) return;
+  const W = 900, H = 240, PAD_X = 16, PAD_Y = 26;
+  const n = rows.length;
+  const stepX = n > 1 ? (W - PAD_X * 2) / (n - 1) : 0;
+
+  function yFor(value, max){
+    const v = Math.max(0, Math.min(1, value / max));
+    return H - PAD_Y - v * (H - PAD_Y * 2);
+  }
+  function pathFor(key, max){
+    return rows.map((r, i) => {
+      const x = PAD_X + i * stepX;
+      const y = yFor(parseFloat(r[key]) || 0, max);
+      return (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+  }
+
+  const ns = "http://www.w3.org/2000/svg";
+  // gridlines
+  [0.25, 0.5, 0.75].forEach(f => {
+    const line = document.createElementNS(ns, "line");
+    const y = PAD_Y + f * (H - PAD_Y * 2);
+    line.setAttribute("x1", PAD_X); line.setAttribute("x2", W - PAD_X);
+    line.setAttribute("y1", y.toFixed(1)); line.setAttribute("y2", y.toFixed(1));
+    line.setAttribute("class", "gridline");
+    svg.appendChild(line);
+  });
+
+  const series = [
+    { key: "study_hours", max: 10, cls: "study" },
+    { key: "sleep_hours", max: 10, cls: "sleep" },
+    { key: "mood", max: 5, cls: "mood" },
+  ];
+
+  series.forEach(s => {
+    const path = document.createElementNS(ns, "path");
+    const d = pathFor(s.key, s.max);
+    path.setAttribute("d", d);
+    path.setAttribute("class", "line " + s.cls);
+    svg.appendChild(path);
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    requestAnimationFrame(() => {
+      path.style.transition = "stroke-dashoffset 1.6s cubic-bezier(.22,.68,.36,1)";
+      path.style.strokeDashoffset = "0";
+    });
+  });
+
+  // x-axis date labels (every ~3rd point)
+  rows.forEach((r, i) => {
+    if (i % 3 !== 0 && i !== n - 1) return;
+    const x = PAD_X + i * stepX;
+    const label = document.createElementNS(ns, "text");
+    label.setAttribute("x", x.toFixed(1));
+    label.setAttribute("y", H - 4);
+    label.setAttribute("class", "axis-label");
+    label.setAttribute("text-anchor", i === n - 1 ? "end" : "middle");
+    label.textContent = (r.log_date || "").slice(5);
+    svg.appendChild(label);
+  });
+})();
+
+// ---- Sparklines for statistics ----
+(function drawSparklines(){
+  const ns = "http://www.w3.org/2000/svg";
+  function spark(id, key, max, cls){
+    const svg = document.getElementById(id);
+    if (!svg) return;
+    const W = 90, H = 26, PAD = 2;
+    const n = rows.length;
+    const stepX = n > 1 ? (W - PAD * 2) / (n - 1) : 0;
+    const d = rows.map((r, i) => {
+      const x = PAD + i * stepX;
+      const v = Math.max(0, Math.min(1, (parseFloat(r[key]) || 0) / max));
+      const y = H - PAD - v * (H - PAD * 2);
+      return (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("class", "spark-line " + cls);
+    svg.appendChild(path);
+  }
+  spark("sparkStudy", "study_hours", 10, "study");
+  spark("sparkSleep", "sleep_hours", 10, "sleep");
+  spark("sparkMood", "mood", 5, "mood");
+})();
+
+// ---- Trend chart: default scroll position shows the most recent days ----
+(function initChartScroll(){
+  const scroller = document.getElementById("chartScroll");
+  if (!scroller) return;
+  scroller.scrollLeft = scroller.scrollWidth;
+})();
+
+</script>
+
+<script>
+// ---- Edit toggle for saved subjects/commitments ----
+document.querySelectorAll("[data-edit-toggle]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    btn.closest(".subject-row")?.classList.toggle("editing");
+  });
+});
+</script>
+
+<script>
+// ---- Today's Schedule dots: local "I did this today" toggle. Purely
+// visual (glow on/off) — never a request to the server, never touches
+// the subject or the plan. Marking a subject actually done/complete only
+// happens from the list in Manage Subjects & Commitments. ----
+document.querySelectorAll("[data-t-dot]").forEach((dot) => {
+  dot.addEventListener("click", () => {
+    const on = dot.getAttribute("aria-pressed") === "true";
+    dot.setAttribute("aria-pressed", String(!on));
+  });
+});
+</script>
+
+<script>
+// ---- Day picker visibility — only worth offering for flexible tasks
+// (not a fixed weekly commitment, which already pins one day) that need
+// more than an hour, since anything shorter usually fits in one sitting
+// anyway. ----
+document.querySelectorAll("[data-subject-form]").forEach((form) => {
+  const hoursInput = form.querySelector("[data-hours-input]");
+  const fixedCheck = form.querySelector("[data-fixed-check]");
+  const dayPicker = form.querySelector("[data-day-picker]");
+  const hint = form.querySelector(".day-picker-hint");
+  if (!hoursInput || !fixedCheck || !dayPicker) return;
+
+  const sync = () => {
+    const hours = parseFloat(hoursInput.value);
+    const eligible = !fixedCheck.checked && hours > 1;
+    dayPicker.hidden = !eligible;
+    if (hint) hint.hidden = !eligible;
+    if (!eligible) {
+      dayPicker.querySelectorAll("input[type=checkbox]").forEach((cb) => { cb.checked = false; });
+    }
+  };
+
+  hoursInput.addEventListener("input", sync);
+  fixedCheck.addEventListener("change", sync);
+  sync();
+});
+</script>
+
+{% endif %}
+
+<script>
+// ---- Rotating quote (mock data — subtle, elegant) ----
+(function rotateQuote(){
+  const el = document.getElementById("quoteText");
+  if (!el) return;
+  const quotes = [
+    "Small, steady choices are what recovery is made of.",
+    "Rest isn't a break from progress. It's part of it.",
+    "The pattern speaks before the crash does.",
+    "Consistency is quieter than intensity, and it lasts longer.",
+    "Some days ask for less. That's still moving forward.",
+  ];
+  let i = 0;
+  setInterval(() => {
+    i = (i + 1) % quotes.length;
+    el.style.opacity = 0;
+    setTimeout(() => { el.textContent = quotes[i]; el.style.opacity = 1; }, 500);
+  }, 7000);
+})();
+</script>
+{% endblock %}
