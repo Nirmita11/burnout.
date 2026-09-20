@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 import hashlib
 import os
 
@@ -125,14 +126,37 @@ def verify_password(
 # CURRENT USER
 # =========================================================
 
-def time_of_day_greeting() -> str:
+def _user_now(request: Request) -> datetime:
+    """The current moment in the visitor's own timezone, not the
+    server's. A small script (base.html) sets a `tz` cookie to the
+    browser's IANA zone on every page load; this reads it back.
+
+    Deployed on Render, the server's own local time is UTC — a student
+    in, say, IST (UTC+5:30) crosses into a new day over five hours
+    before the server does. Every "today" in this app (the dashboard
+    date/greeting, the log form's default date, which day the weekly
+    plan starts on) needs to mean *their* today, not the server's, or
+    it visibly disagrees with their own clock for hours around midnight.
+
+    Falls back to the server's local time when the cookie isn't there
+    yet (a visitor's very first request in a session) or names a zone
+    we don't recognize.
+    """
+    tz_name = request.cookies.get("tz")
+    if tz_name:
+        try:
+            return datetime.now(ZoneInfo(tz_name))
+        except Exception:
+            pass
+    return datetime.now()
+
+
+def time_of_day_greeting(now: datetime) -> str:
     """A quiet contextual greeting — purely presentational."""
 
-    hour = datetime.now().hour
-
-    if hour < 12:
+    if now.hour < 12:
         return "Good morning"
-    if hour < 18:
+    if now.hour < 18:
         return "Good afternoon"
     return "Good evening"
 
@@ -358,6 +382,9 @@ def dashboard(request: Request):
             status_code=303,
         )
 
+    now = _user_now(request)
+    today = now.date()
+
     # The rule-based engine looks at up to the last 30 days. This is also
     # what drives the dashboard's chart/history/streak below, so that
     # section isn't pinned at a fixed "14" either — a student with 9 days
@@ -395,7 +422,7 @@ def dashboard(request: Request):
     subjects = [dict(s) for s in get_subjects(user["id"])]
     latest_wake_time = rows[-1].get("wake_time") if rows else None
     weekly_plan = generate_weekly_timetable(
-        result.get("level", "Low"), subjects, user["recovery_minutes"], latest_wake_time
+        result.get("level", "Low"), subjects, user["recovery_minutes"], latest_wake_time, today=today
     )
 
     # "Today's Schedule" is just day 0 of the same real plan above — not a
@@ -407,7 +434,7 @@ def dashboard(request: Request):
     # "needs attention" message.
     today_desc = describe_today(rows[-1]) if rows else None
 
-    logged_today = any(r["log_date"] == date.today().isoformat() for r in rows)
+    logged_today = any(r["log_date"] == today.isoformat() for r in rows)
 
     # Secondary ML signal, shown only as a small corner badge next to the
     # main risk card (see dashboard.html) — never its own competing block.
@@ -428,9 +455,9 @@ def dashboard(request: Request):
             "rows": rows,
             "risk": result,
             "today_desc": today_desc,
-            "today": date.today().isoformat(),
-            "today_label": date.today().strftime("%A, %B ") + str(date.today().day),
-            "greeting": time_of_day_greeting(),
+            "today": today.isoformat(),
+            "today_label": today.strftime("%A, %B ") + str(today.day),
+            "greeting": time_of_day_greeting(now),
             "has_data": bool(rows),
             "logged_today": logged_today,
             "streak": _logging_streak(rows),

@@ -8,6 +8,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/app.css?v={{ css_version }}">
+  <script>
+  // Tell the server what day/time it actually is where the student is,
+  // not wherever the server happens to run (Render's is UTC — hours off
+  // from most students' own midnight). Runs before the page paints, and
+  // reloads once if the cookie was missing or stale, so the very first
+  // request in a session still gets the right "today" instead of only
+  // catching up on the next click.
+  (function syncTimezone(){
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      var m = document.cookie.match(/(?:^|; )tz=([^;]*)/);
+      var current = m ? decodeURIComponent(m[1]) : null;
+      if (tz && tz !== current) {
+        document.cookie = "tz=" + encodeURIComponent(tz) + ";path=/;max-age=31536000;samesite=lax";
+        if (!sessionStorage.getItem("tzSynced")) {
+          sessionStorage.setItem("tzSynced", "1");
+          location.reload();
+        }
+      }
+    } catch (e) {}
+  })();
+  </script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>

@@ -46,14 +46,14 @@ def _round15(m):
     return max(15, int(round(m / 15.0)) * 15)
 
 
-def _deadline_label(deadline_date):
+def _deadline_label(deadline_date, today=None):
     if not deadline_date:
         return "No deadline set"
     try:
         dd = date.fromisoformat(deadline_date)
     except ValueError:
         return deadline_date
-    days = (dd - date.today()).days
+    days = (dd - (today or date.today())).days
     if days < 0:
         return "Past due"
     if days == 0:
@@ -156,7 +156,7 @@ def _split_into_sittings(start_m, total_minutes, label, kind, max_sitting, rest_
     return blocks, cursor
 
 
-def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None):
+def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None, today=None):
     """Builds a real day-by-day plan from the student's own subjects."""
 
     factor = _RISK_FACTOR.get(risk_level, 1.0)
@@ -193,7 +193,7 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None):
     # greedily maxing out whichever day it happens to be processed on
     # first and then sitting idle (or recurring uselessly past its own
     # deadline) for the rest of the week.
-    week_start = _week_start()
+    week_start = _week_start(today)
     # Real calendar weekday names for each of the 7 days shown, starting
     # today — NOT the fixed DAYS list (that stays a Monday..Sunday
     # reference used only to parse/validate stored fixed_day/
@@ -313,7 +313,7 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None):
             "deadline": (
                 f"Fixed · {s.get('fixed_day', '')} {s.get('fixed_time', '')}".strip()
                 if s.get("is_fixed")
-                else _deadline_label(s.get("deadline_date"))
+                else _deadline_label(s.get("deadline_date"), week_start)
             ),
         }
         for s in sorted(subjects, key=_deadline_sort_key)
@@ -326,7 +326,7 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None):
     }
 
 
-def generate_weekly_timetable(risk_level: str, subjects=None, base_rest_minutes=None, wake_time=None):
+def generate_weekly_timetable(risk_level: str, subjects=None, base_rest_minutes=None, wake_time=None, today=None):
     """
     The single entry point. `subjects` must come from database.get_subjects()
     (via main.py) — there is no other source of schedule data. If the
@@ -342,4 +342,4 @@ def generate_weekly_timetable(risk_level: str, subjects=None, base_rest_minutes=
             "rest_len": None,
             "empty": True,
         }
-    return _real_week(risk_level, subjects, base_rest_minutes, wake_time)
+    return _real_week(risk_level, subjects, base_rest_minutes, wake_time, today)
