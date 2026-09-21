@@ -276,6 +276,35 @@ summary:focus-visible, [tabindex]:focus-visible{
   position:relative;display:flex;flex-direction:row;justify-content:flex-start;align-items:center;
 }
 .hero-copy{position:relative;z-index:2;max-width:640px}
+
+/* Hero text entrance — a quiet staggered rise-and-fade on load (not a
+   scroll .reveal; this content is already above the fold). Each child
+   animates independently so the eyebrow lands first, then the
+   headline, then the lede and CTA, instead of the whole block
+   appearing as one flat block. */
+@keyframes heroRise{
+  0%{opacity:0;transform:translateY(22px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+.hero-copy .eyebrow,
+.hero-copy h1.display,
+.hero-copy .lede,
+.hero-copy .cta-row{
+  animation:heroRise .9s var(--ease) both;
+}
+.hero-copy .eyebrow{animation-delay:.05s}
+.hero-copy h1.display{animation-delay:.16s}
+.hero-copy .lede{animation-delay:.36s}
+.hero-copy .cta-row{animation-delay:.5s}
+@media (prefers-reduced-motion: reduce){
+  .hero-copy .eyebrow,
+  .hero-copy h1.display,
+  .hero-copy .lede,
+  .hero-copy .cta-row{
+    animation:none;
+  }
+}
+
 h1.display{
   font:600 clamp(42px,6.2vw,84px)/1.06 var(--serif);
   letter-spacing:-2.2px;
