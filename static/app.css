@@ -169,6 +169,7 @@ summary:focus-visible, [tabindex]:focus-visible{
   transition:.25s var(--ease);
 }
 .nav-pill:hover,.secondary-btn:hover{border-color:rgba(232,145,107,.4);background:rgba(232,145,107,.08)}
+.nav-pill:active,.secondary-btn:active{transform:scale(.96)}
 .user-chip{font:11px var(--mono);color:var(--muted-dim);letter-spacing:.5px}
 
 .primary-btn{
@@ -185,6 +186,7 @@ summary:focus-visible, [tabindex]:focus-visible{
   transition:.3s var(--ease);
 }
 .primary-btn:hover{transform:translateY(-2px);box-shadow:0 18px 48px rgba(232,145,107,.28)}
+.primary-btn:active{transform:translateY(0) scale(.97);box-shadow:0 10px 28px rgba(232,145,107,.22)}
 .primary-btn.full{width:100%}
 .text-link{color:var(--coral-light);font-size:15px;display:inline-flex;align-items:center;gap:8px;transition:gap .25s var(--ease)}
 .text-link:hover{gap:12px}
@@ -406,12 +408,15 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
   content:""; position:absolute; left:8%; right:8%; top:26px; height:1px;
   background:linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent);
 }
-.signal-node{position:relative; padding:0 26px; text-align:left}
+.signal-node{position:relative; padding:0 26px; text-align:left; transition:transform .35s var(--ease)}
+.signal-node:hover{transform:translateY(-4px)}
 .signal-node .dot{
   width:11px;height:11px;border-radius:50%;margin-bottom:26px;position:relative;z-index:2;
   box-shadow:0 0 0 6px var(--bg);
   background:var(--coral);
+  transition:.35s var(--ease);
 }
+.signal-node:hover .dot{transform:scale(1.25);box-shadow:0 0 0 6px var(--bg),0 0 18px rgba(232,145,107,.6)}
 .signal-node h3{font:500 26px var(--serif);margin:0 0 10px;letter-spacing:-.4px}
 .signal-node p{color:var(--muted);line-height:1.65;margin:0;max-width:280px;font-size:15px}
 
@@ -450,9 +455,13 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
   border-radius:28px;
   padding:52px 46px;
   backdrop-filter:blur(20px);
-  box-shadow:0 40px 120px rgba(4,3,2,.45);
+  box-shadow:0 20px 50px rgba(4,3,2,.28);
+  animation:heroRise .7s var(--ease) both;
 }
-.auth-card h1{font:600 42px var(--serif);letter-spacing:-1.5px;margin:20px 0 12px}
+@media (prefers-reduced-motion: reduce){
+  .auth-card{animation:none}
+}
+.auth-card h1{font:600 clamp(30px,7vw,42px) var(--serif);letter-spacing:-1.5px;margin:20px 0 12px}
 .auth-card>p{color:var(--muted);line-height:1.65;margin:0 0 32px;font-size:15px}
 .auth-card form{display:grid;gap:20px}
 .auth-card label,.log-form label,.subject-form label{font-size:13px;color:var(--muted);display:grid;gap:9px}
@@ -515,7 +524,7 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
 .orbit-center{
   position:absolute;inset:0;display:grid;place-items:center;text-align:center;
 }
-.orbit-center strong{font:600 46px var(--serif);letter-spacing:-1px;display:block;color:var(--cream)}
+.orbit-center strong{font:600 clamp(32px,9vw,46px) var(--serif);letter-spacing:-1px;display:block;color:var(--cream)}
 .orbit-center span{font:10px var(--mono);letter-spacing:1.5px;color:var(--muted-dim);text-transform:uppercase}
 
 .risk-copy{padding-top:6px}
@@ -550,6 +559,17 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
 .notice-chip.risk .arrow{color:var(--status-high)}
 .notice-chip.positive .arrow{color:var(--status-low)}
 .notice-chip small{color:var(--muted-dim);font:11px var(--mono)}
+
+/* Staggered entrance — rides on the parent .risk-hero's own .reveal/.in
+   (see base.html's scroll observer); each chip just adds its own delay
+   on top, so the row arrives as a ripple instead of all at once. */
+.notice-chip{opacity:0;transform:translateY(12px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.reveal.in .notice-chip{opacity:1;transform:translateY(0)}
+.notice-chip:nth-child(1){transition-delay:.05s}
+.notice-chip:nth-child(2){transition-delay:.1s}
+.notice-chip:nth-child(3){transition-delay:.15s}
+.notice-chip:nth-child(4){transition-delay:.2s}
+.notice-chip:nth-child(5){transition-delay:.25s}
 
 .model-link-row{max-width:var(--content-max);margin:16px auto 0;padding:0 8px;text-align:right}
 .text-link.subtle{color:var(--muted-dim);font-size:13px}
@@ -616,7 +636,17 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
 #schedule .card-head > div{width:100%}
 
 .timeline{margin:34px auto 0;border-left:1px solid var(--line);padding-left:30px;display:grid;gap:30px;max-width:640px}
-.timeline .t-item{position:relative}
+.timeline .t-item{
+  position:relative;
+  opacity:0;transform:translateY(14px);transition:opacity .55s var(--ease),transform .55s var(--ease);
+}
+.reveal.in .timeline .t-item{opacity:1;transform:translateY(0)}
+.timeline .t-item:nth-child(1){transition-delay:.05s}
+.timeline .t-item:nth-child(2){transition-delay:.11s}
+.timeline .t-item:nth-child(3){transition-delay:.17s}
+.timeline .t-item:nth-child(4){transition-delay:.23s}
+.timeline .t-item:nth-child(5){transition-delay:.29s}
+.timeline .t-item:nth-child(n+6){transition-delay:.35s}
 /* A real, clickable element in the dot's old spot (was a ::before marker)
    — purely a local "I did this today" toggle: click glows it, click again
    clears it. Never touches the subject, the plan, or the server; a page
@@ -642,7 +672,19 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
 
 /* Weekly timetable */
 .week-grid{margin-top:34px;display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
-.week-day{border:1px solid var(--line);border-radius:18px;padding:18px 14px;background:rgba(179,164,148,.03);min-height:180px}
+.week-day{
+  border:1px solid var(--line);border-radius:18px;padding:18px 14px;background:rgba(179,164,148,.03);min-height:180px;
+  opacity:0;transform:translateY(16px);transition:opacity .55s var(--ease),transform .55s var(--ease);
+}
+.reveal.in .week-day{opacity:1;transform:translateY(0)}
+.week-day:nth-child(1){transition-delay:.04s}
+.week-day:nth-child(2){transition-delay:.09s}
+.week-day:nth-child(3){transition-delay:.14s}
+.week-day:nth-child(4){transition-delay:.19s}
+.week-day:nth-child(5){transition-delay:.24s}
+.week-day:nth-child(6){transition-delay:.29s}
+.week-day:nth-child(7){transition-delay:.34s}
+.week-day:hover{border-color:rgba(232,145,107,.28);background:rgba(179,164,148,.06);transform:translateY(-3px)}
 .week-day h4{font:600 11px var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
 .week-block{font-size:12px;margin-bottom:10px;line-height:1.5}
 .week-block .wb-time{color:var(--muted-dim);font:10px var(--mono);display:block}
@@ -891,7 +933,7 @@ td{padding:15px 12px;border-bottom:1px solid var(--line-soft);color:var(--muted)
 .insight-note code{font:12px var(--mono);background:rgba(179,164,148,.08);padding:2px 6px;border-radius:6px}
 
 .model-prob-row{display:flex;align-items:center;gap:32px;flex-wrap:wrap;margin-top:16px}
-.model-prob-big{font:600 72px var(--serif);color:var(--cream);line-height:1}
+.model-prob-big{font:600 clamp(44px,12vw,72px) var(--serif);color:var(--cream);line-height:1}
 .model-prob-big span{font-size:28px;color:var(--muted-dim);margin-left:4px}
 .model-prob-row .insight-note{flex:1;min-width:220px}
 

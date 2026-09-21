@@ -143,7 +143,7 @@
     <!-- 3. LOG TODAY — relocated near the top since this is the single
          most frequent action a student takes here; previously required
          scrolling to the very bottom of the page every day. -->
-    <section class="log-today-block" id="logToday">
+    <section class="log-today-block reveal" id="logToday">
       {% if logged_today %}
         {% set today_row = rows[-1] %}
         <div class="log-today-card">
@@ -175,7 +175,7 @@
     <!-- 4. STAT CARDS — reuses the same floating-card visual language as
          the landing page's "THIS WEEK" preview, so the app feels like one
          design system rather than a different look per page. -->
-    <section class="stats-card">
+    <section class="stats-card reveal">
       <div class="floating-card">
         <div class="fc-head">
           <span class="fc-label">{{ rows|length }}-DAY AVERAGES</span>
@@ -184,17 +184,17 @@
         <div class="fc-stats">
           <div class="fc-stat-row">
             <span class="s-label">Study</span>
-            <div class="s-value">{{ risk.avg_study }}<small> hrs</small></div>
+            <div class="s-value"><span data-count="{{ risk.avg_study }}">0</span><small> hrs</small></div>
             <svg width="90" height="26" id="sparkStudy" aria-hidden="true"></svg>
           </div>
           <div class="fc-stat-row">
             <span class="s-label">Sleep</span>
-            <div class="s-value">{{ risk.avg_sleep }}<small> hrs</small></div>
+            <div class="s-value"><span data-count="{{ risk.avg_sleep }}">0</span><small> hrs</small></div>
             <svg width="90" height="26" id="sparkSleep" aria-hidden="true"></svg>
           </div>
           <div class="fc-stat-row">
             <span class="s-label">Mood</span>
-            <div class="s-value">{{ risk.avg_mood }}<small> /5</small></div>
+            <div class="s-value"><span data-count="{{ risk.avg_mood }}">0</span><small> /5</small></div>
             <svg width="90" height="26" id="sparkMood" aria-hidden="true"></svg>
           </div>
         </div>
@@ -208,7 +208,7 @@
          NOT touch the subject or the plan. Actually marking a subject
          done/complete only happens from the list below, in Manage
          Subjects & Commitments. -->
-    <section class="section-block" id="schedule">
+    <section class="section-block reveal" id="schedule">
       <div class="card-head">
         <div><span class="mini-label">TODAY'S SCHEDULE</span><h2>Shaped by today's signal.</h2></div>
       </div>
@@ -234,7 +234,7 @@
     </section>
 
     <!-- WEEKLY TIMETABLE -->
-    <section class="section-block" id="weekly-plan">
+    <section class="section-block reveal" id="weekly-plan">
       <div class="card-head">
         <div><span class="mini-label">WEEKLY PLAN</span><h2>The week ahead.</h2></div>
       </div>
@@ -371,7 +371,7 @@
          Apple Health's weekly view (not separate day boxes). Labeled with
          the actual number of days shown, not a hardcoded count — it grows
          day by day as more gets logged, up to the 30-day cap fetched above. -->
-    <section class="section-block">
+    <section class="section-block reveal">
       <div class="card-head">
         <div><span class="mini-label">THE LAST {{ rows|length }} DAY{{ 'S' if rows|length != 1 else '' }}</span><h2>What's changing.</h2></div>
       </div>
@@ -387,12 +387,12 @@
       </div>
     </section>
 
-    <div class="quote-block">
+    <div class="quote-block reveal">
       <blockquote id="quoteText">Small, steady choices are what recovery is made of.</blockquote>
     </div>
 
     <!-- 7. HISTORY — lowest priority, pure reference -->
-    <details class="history-block">
+    <details class="history-block reveal">
       <summary>
         <h2>{{ rows|length }}-day history</h2>
         <span class="toggle-icon">+</span>
@@ -454,6 +454,37 @@ requestAnimationFrame(() => {
     if (p < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+})();
+
+// ---- Stat card count-up (Study/Sleep/Mood) — starts once the card
+// actually scrolls into view, same moment its .reveal fade-in kicks
+// off, rather than on page load where it'd finish counting before
+// anyone scrolls down far enough to see it. ----
+(function animateStatCounts(){
+  const card = document.querySelector(".stats-card");
+  const counters = document.querySelectorAll(".stats-card [data-count]");
+  if (!card || !counters.length) return;
+
+  const runOnce = () => {
+    counters.forEach((el) => {
+      const target = parseFloat(el.dataset.count) || 0;
+      const duration = 1100, start = performance.now();
+      function tick(now){
+        const p = Math.min(1, (now - start) / duration);
+        el.textContent = (p * target).toFixed(1);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  };
+
+  if (!("IntersectionObserver" in window)) { runOnce(); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) { runOnce(); io.unobserve(entry.target); }
+    });
+  }, { threshold: 0.3 });
+  io.observe(card);
 })();
 
 // ---- Hand-built SVG trend chart (study / sleep / mood) ----
