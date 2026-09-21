@@ -153,11 +153,13 @@ def init_db():
         _ensure_column(db, "logs", "sleep_start", "TEXT")
         _ensure_column(db, "logs", "wake_time", "TEXT")
         _ensure_column(db, "logs", "study_start_time", "TEXT")
-        # Migration: student-chosen days ("Monday,Wednesday,Friday") to
-        # spread a flexible subject's hours across, instead of the
-        # scheduler deciding evenly on its own. Nullable/empty — falls
-        # back to the automatic spread when not set. Meaningless for
-        # fixed commitments (they already pin one day via fixed_day).
+        # Migration: student-chosen days ("Monday,Wednesday,Friday"). For
+        # a flexible subject, which days to spread its hours across
+        # instead of the scheduler deciding evenly on its own — nullable,
+        # falls back to the automatic spread when not set. For a fixed
+        # commitment, which day(s) it recurs on every week — replaces the
+        # older single-value fixed_day column (still read as a fallback
+        # for rows saved before this, but no longer written to).
         _ensure_column(db, "subjects", "preferred_days", "TEXT")
 
 

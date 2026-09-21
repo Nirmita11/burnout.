@@ -139,6 +139,25 @@ def _preferred_day_indices(subject, deadline_idx, day_names):
     return idxs or None
 
 
+def _fixed_days(subject):
+    """Which weekday names (lowercased) a fixed commitment recurs on.
+
+    Reuses the same `preferred_days` field flexible tasks use to pick
+    which days to spread across — a fixed commitment can meet more than
+    once a week (e.g. a class on Tuesday AND Thursday), so it needed a
+    multi-day picker too rather than the old single "Day" dropdown, and
+    there was no reason to build a second picker when this one already
+    does multi-day selection. `fixed_day` (the old single-value column)
+    is still read as a fallback so commitments saved before this change
+    keep working without a migration.
+    """
+    raw = subject.get("preferred_days")
+    if raw:
+        return {d.strip().lower() for d in raw.split(",") if d.strip()}
+    single = subject.get("fixed_day")
+    return {single.lower()} if single else set()
+
+
 def _split_into_sittings(start_m, total_minutes, label, kind, max_sitting, rest_len):
     """
     Splits a single long commitment into <= max_sitting chunks with a
@@ -232,7 +251,7 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None, tod
     for day_idx, day_name in enumerate(day_names):
         blocks = []
         todays_fixed = sorted(
-            (s for s in fixed if (s.get("fixed_day") or "").lower() == day_name.lower()),
+            (s for s in fixed if day_name.lower() in _fixed_days(s)),
             key=lambda s: s.get("fixed_time") or "00:00",
         )
         fixed_windows = []
@@ -322,7 +341,7 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None, tod
         {
             "name": s["name"],
             "deadline": (
-                f"Fixed · {s.get('fixed_day', '')} {s.get('fixed_time', '')}".strip()
+                f"Fixed · {(s.get('preferred_days') or s.get('fixed_day') or '').replace(',', ', ')} · {s.get('fixed_time', '')}".strip()
                 if s.get("is_fixed")
                 else _deadline_label(s.get("deadline_date"), week_start)
             ),

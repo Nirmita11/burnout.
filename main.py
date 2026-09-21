@@ -627,7 +627,6 @@ def add_subject(
     estimated_hours: float = Form(...),
     deadline_date: Optional[str] = Form(None),
     is_fixed: Optional[str] = Form(None),
-    fixed_day: Optional[str] = Form(None),
     fixed_time: Optional[str] = Form(None),
     preferred_days: List[str] = Form([]),
 ):
@@ -650,9 +649,9 @@ def add_subject(
         estimated_hours=estimated_hours,
         deadline_date=deadline_date or None,
         is_fixed=fixed,
-        fixed_day=fixed_day if fixed else None,
+        fixed_day=None,
         fixed_time=fixed_time if fixed else None,
-        preferred_days=_clean_preferred_days(preferred_days) if not fixed else None,
+        preferred_days=_clean_preferred_days(preferred_days),
     )
 
     return RedirectResponse("/dashboard?updated=1#subjectManager", status_code=303)
@@ -666,7 +665,6 @@ def edit_subject(
     estimated_hours: float = Form(...),
     deadline_date: Optional[str] = Form(None),
     is_fixed: Optional[str] = Form(None),
-    fixed_day: Optional[str] = Form(None),
     fixed_time: Optional[str] = Form(None),
     preferred_days: List[str] = Form([]),
 ):
@@ -690,9 +688,9 @@ def edit_subject(
         estimated_hours=estimated_hours,
         deadline_date=deadline_date or None,
         is_fixed=fixed,
-        fixed_day=fixed_day if fixed else None,
+        fixed_day=None,
         fixed_time=fixed_time if fixed else None,
-        preferred_days=_clean_preferred_days(preferred_days) if not fixed else None,
+        preferred_days=_clean_preferred_days(preferred_days),
     )
 
     return RedirectResponse("/dashboard?updated=1#subjectManager", status_code=303)

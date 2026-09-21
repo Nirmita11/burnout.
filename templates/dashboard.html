@@ -283,7 +283,7 @@
                 <div class="subject-display">
                   <span>
                     <b>{{ s.name }}</b>
-                    {% if s.is_fixed %}Fixed · {{ s.fixed_day }} {{ s.fixed_time }}
+                    {% if s.is_fixed %}Fixed · {{ (s.preferred_days or s.fixed_day or '').replace(',', ', ') }} · {{ s.fixed_time }}
                     {% else %}{{ s.estimated_hours }}h/week{% if s.deadline_date %} · due {{ s.deadline_date }}{% endif %}
                     {% endif %}
                   </span>
@@ -306,22 +306,17 @@
                     <label>Deadline (optional)<input type="date" name="deadline_date" value="{{ s.deadline_date or '' }}" data-deadline-input></label>
                     <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" {{ 'checked' if s.is_fixed else '' }} data-fixed-check> This is a fixed commitment</label>
                   </div>
-                  <div class="input-row">
-                    <label>Day<select name="fixed_day">
-                      {% for d in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
-                        <option value="{{ d }}"{{ ' selected' if s.fixed_day == d else '' }}>{{ d }}</option>
-                      {% endfor %}
-                    </select></label>
+                  <div class="input-row" data-fixed-time-row hidden>
                     <label>Time<input type="time" name="fixed_time" value="{{ s.fixed_time or '09:00' }}"></label>
                   </div>
-                  {% set pref = (s.preferred_days or '').split(',') %}
+                  {% set pref = (s.preferred_days or s.fixed_day or '').split(',') %}
                   <fieldset class="day-picker" data-day-picker hidden>
-                    <legend>Spread across specific days (optional)</legend>
+                    <legend data-day-picker-legend>Spread across specific days (optional)</legend>
                     {% for d in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
                       <label class="day-check"><input type="checkbox" name="preferred_days" value="{{ d }}"{{ ' checked' if d in pref else '' }}> {{ d[:3] }}</label>
                     {% endfor %}
                   </fieldset>
-                  <p class="day-picker-hint">Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.</p>
+                  <p class="day-picker-hint" data-day-picker-hint>Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.</p>
                   <button class="primary-btn full" type="submit">Save changes →</button>
                 </form>
               </li>
@@ -338,22 +333,16 @@
             <label>Deadline (optional)<input type="date" name="deadline_date" data-deadline-input></label>
             <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" id="isFixedCheck" data-fixed-check> This is a fixed commitment</label>
           </div>
-          <div class="input-row">
-            <label>Day<select name="fixed_day">
-              <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option><option value="Saturday">Saturday</option>
-              <option value="Sunday">Sunday</option>
-            </select></label>
+          <div class="input-row" data-fixed-time-row hidden>
             <label>Time<input type="time" name="fixed_time" value="09:00"></label>
           </div>
           <fieldset class="day-picker" data-day-picker hidden>
-            <legend>Spread across specific days (optional)</legend>
+            <legend data-day-picker-legend>Spread across specific days (optional)</legend>
             {% for d in ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
               <label class="day-check"><input type="checkbox" name="preferred_days" value="{{ d }}"> {{ d[:3] }}</label>
             {% endfor %}
           </fieldset>
-          <p class="day-picker-hint">Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.</p>
+          <p class="day-picker-hint" data-day-picker-hint>Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.</p>
           <button class="primary-btn full" type="submit">Add to plan →</button>
         </form>
 
@@ -590,22 +579,38 @@ document.querySelectorAll("[data-t-dot]").forEach((dot) => {
 </script>
 
 <script>
-// ---- Day picker visibility — only worth offering for flexible tasks
-// (not a fixed weekly commitment, which already pins one day) that need
-// more than an hour, since anything shorter usually fits in one sitting
-// anyway. ----
+// ---- Day picker visibility/wording — the same multi-day picker now
+// serves two different subject types: for a fixed commitment, it's
+// which day(s) it recurs on every week (a class can meet more than
+// once a week, e.g. Tue + Thu — there's no reason to force a single-
+// day dropdown when this already handles multiple days); for a
+// flexible task over an hour, it's still the optional "spread across
+// just these days" refinement. Time only makes sense for fixed. ----
 document.querySelectorAll("[data-subject-form]").forEach((form) => {
   const hoursInput = form.querySelector("[data-hours-input]");
   const fixedCheck = form.querySelector("[data-fixed-check]");
   const dayPicker = form.querySelector("[data-day-picker]");
-  const hint = form.querySelector(".day-picker-hint");
+  const hint = form.querySelector("[data-day-picker-hint]");
+  const legend = form.querySelector("[data-day-picker-legend]");
+  const timeRow = form.querySelector("[data-fixed-time-row]");
   if (!hoursInput || !fixedCheck || !dayPicker) return;
 
+  const FLEX_HINT = "Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.";
+  const FIXED_HINT = "Pick which day(s) this happens on every week — e.g. a class on Tuesday and Thursday.";
+  const FLEX_LEGEND = "Spread across specific days (optional)";
+  const FIXED_LEGEND = "Which day(s) does this happen on?";
+
   const sync = () => {
+    const fixed = fixedCheck.checked;
     const hours = parseFloat(hoursInput.value);
-    const eligible = !fixedCheck.checked && hours > 1;
+    const eligible = fixed || hours > 1;
     dayPicker.hidden = !eligible;
-    if (hint) hint.hidden = !eligible;
+    if (hint) {
+      hint.hidden = !eligible;
+      hint.textContent = fixed ? FIXED_HINT : FLEX_HINT;
+    }
+    if (legend) legend.textContent = fixed ? FIXED_LEGEND : FLEX_LEGEND;
+    if (timeRow) timeRow.hidden = !fixed;
     if (!eligible) {
       dayPicker.querySelectorAll("input[type=checkbox]").forEach((cb) => { cb.checked = false; });
     }
