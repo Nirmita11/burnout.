@@ -703,6 +703,11 @@ form.subject-edit-form{display:none;padding:0 16px 16px;max-width:none;margin-to
   color:var(--coral-light);border-color:rgba(232,145,107,.4);background:rgba(232,145,107,.08);
 }
 .day-check input[type=checkbox]{width:14px;height:14px;accent-color:var(--coral)}
+.day-check.day-disabled{
+  opacity:.35;color:var(--muted-dim);
+  text-decoration:line-through;text-decoration-color:var(--muted-dim);
+}
+.day-check:has(input:disabled){cursor:not-allowed}
 .day-picker-hint{font-size:12px;color:var(--muted-dim);margin:0}
 
 .recovery-pref-form{margin-top:28px;padding-top:22px;border-top:1px solid var(--line);max-width:420px}

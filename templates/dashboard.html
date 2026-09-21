@@ -303,7 +303,7 @@
                     <label>Hours needed this week<input type="number" name="estimated_hours" min="0.25" max="40" step="0.25" value="{{ s.estimated_hours }}" required data-hours-input></label>
                   </div>
                   <div class="input-row">
-                    <label>Deadline (optional)<input type="date" name="deadline_date" value="{{ s.deadline_date or '' }}"></label>
+                    <label>Deadline (optional)<input type="date" name="deadline_date" value="{{ s.deadline_date or '' }}" data-deadline-input></label>
                     <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" {{ 'checked' if s.is_fixed else '' }} data-fixed-check> This is a fixed commitment</label>
                   </div>
                   <div class="input-row">
@@ -335,7 +335,7 @@
             <label>Hours needed this week<input type="number" name="estimated_hours" min="0.25" max="40" step="0.25" placeholder="e.g. 3" required data-hours-input></label>
           </div>
           <div class="input-row">
-            <label>Deadline (optional)<input type="date" name="deadline_date"></label>
+            <label>Deadline (optional)<input type="date" name="deadline_date" data-deadline-input></label>
             <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" id="isFixedCheck" data-fixed-check> This is a fixed commitment</label>
           </div>
           <div class="input-row">
@@ -614,6 +614,56 @@ document.querySelectorAll("[data-subject-form]").forEach((form) => {
   hoursInput.addEventListener("input", sync);
   fixedCheck.addEventListener("change", sync);
   sync();
+});
+
+// ---- Day picker availability — a picked day past the subject's own
+// deadline can never actually get scheduled (timetable.py drops it),
+// so instead of silently ignoring an invalid pick, disable it before
+// it can be made. Only kicks in when the deadline actually falls
+// within the 7-day window the planner spreads across; a deadline
+// further out doesn't constrain anything yet, so every day stays open. ----
+document.querySelectorAll("[data-subject-form]").forEach((form) => {
+  const deadlineInput = form.querySelector("[data-deadline-input]");
+  const dayPicker = form.querySelector("[data-day-picker]");
+  if (!deadlineInput || !dayPicker) return;
+  const boxes = dayPicker.querySelectorAll('input[name="preferred_days"]');
+
+  const syncAvailability = () => {
+    if (!deadlineInput.value) {
+      boxes.forEach((cb) => { cb.disabled = false; cb.closest(".day-check")?.classList.remove("day-disabled"); });
+      return;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [y, m, d] = deadlineInput.value.split("-").map(Number);
+    const deadline = new Date(y, m - 1, d);
+    const diffDays = Math.round((deadline - today) / 86400000);
+
+    // Deadline already past, or more than a week out: nothing in this
+    // week's picker is actually constrained by it, so leave it all open.
+    if (diffDays < 0 || diffDays > 6) {
+      boxes.forEach((cb) => { cb.disabled = false; cb.closest(".day-check")?.classList.remove("day-disabled"); });
+      return;
+    }
+
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const offsetForName = {};
+    for (let i = 0; i <= 6; i++) {
+      const day = new Date(today);
+      day.setDate(day.getDate() + i);
+      offsetForName[dayNames[day.getDay()]] = i;
+    }
+    boxes.forEach((cb) => {
+      const pastDeadline = offsetForName[cb.value] > diffDays;
+      cb.disabled = pastDeadline;
+      if (pastDeadline) cb.checked = false;
+      cb.closest(".day-check")?.classList.toggle("day-disabled", pastDeadline);
+    });
+  };
+
+  deadlineInput.addEventListener("input", syncAvailability);
+  deadlineInput.addEventListener("change", syncAvailability);
+  syncAvailability();
 });
 </script>
 
