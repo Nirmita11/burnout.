@@ -284,7 +284,7 @@
                   <span>
                     <b>{{ s.name }}</b>
                     {% if s.is_fixed %}Fixed · {{ (s.preferred_days or s.fixed_day or '').replace(',', ', ') }} · {{ s.fixed_time }}
-                    {% else %}{{ s.estimated_hours }}h/week{% if s.deadline_date %} · due {{ s.deadline_date }}{% endif %}
+                    {% else %}{{ s.estimated_hours }}h/week{% if s.deadline_date %} · due {{ s.deadline_date }}{% endif %}{% if s.preferred_time %} · ~{{ s.preferred_time }}{% endif %}
                     {% endif %}
                   </span>
                   <div class="subject-actions">
@@ -308,6 +308,9 @@
                   </div>
                   <div class="input-row" data-fixed-time-row hidden>
                     <label>Time<input type="time" name="fixed_time" value="{{ s.fixed_time or '09:00' }}"></label>
+                  </div>
+                  <div class="input-row" data-preferred-time-row hidden>
+                    <label>Start around (optional)<input type="time" name="preferred_time" value="{{ s.preferred_time or '' }}"></label>
                   </div>
                   {% set pref = (s.preferred_days or s.fixed_day or '').split(',') %}
                   <fieldset class="day-picker" data-day-picker hidden>
@@ -335,6 +338,9 @@
           </div>
           <div class="input-row" data-fixed-time-row hidden>
             <label>Time<input type="time" name="fixed_time" value="09:00"></label>
+          </div>
+          <div class="input-row" data-preferred-time-row hidden>
+            <label>Start around (optional)<input type="time" name="preferred_time"></label>
           </div>
           <fieldset class="day-picker" data-day-picker hidden>
             <legend data-day-picker-legend>Spread across specific days (optional)</legend>
@@ -624,6 +630,7 @@ document.querySelectorAll("[data-subject-form]").forEach((form) => {
   const hint = form.querySelector("[data-day-picker-hint]");
   const legend = form.querySelector("[data-day-picker-legend]");
   const timeRow = form.querySelector("[data-fixed-time-row]");
+  const preferredTimeRow = form.querySelector("[data-preferred-time-row]");
   if (!hoursInput || !fixedCheck || !dayPicker) return;
 
   const FLEX_HINT = "Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.";
@@ -642,6 +649,7 @@ document.querySelectorAll("[data-subject-form]").forEach((form) => {
     }
     if (legend) legend.textContent = fixed ? FIXED_LEGEND : FLEX_LEGEND;
     if (timeRow) timeRow.hidden = !fixed;
+    if (preferredTimeRow) preferredTimeRow.hidden = fixed;
     if (!eligible) {
       dayPicker.querySelectorAll("input[type=checkbox]").forEach((cb) => { cb.checked = false; });
     }

@@ -161,6 +161,12 @@ def init_db():
         # older single-value fixed_day column (still read as a fallback
         # for rows saved before this, but no longer written to).
         _ensure_column(db, "subjects", "preferred_days", "TEXT")
+        # Migration: optional preferred start time ("HH:MM") for a
+        # flexible (deadline-based) subject's work sessions. Nullable —
+        # falls back to wherever the scheduler would otherwise place it
+        # when not set. Distinct from fixed_time, which is the required
+        # time for a fixed commitment.
+        _ensure_column(db, "subjects", "preferred_time", "TEXT")
 
 
 def get_user_by_email(email):
@@ -226,12 +232,12 @@ def get_subjects(user_id):
         """, (user_id,)).fetchall()
 
 
-def create_subject(user_id, name, estimated_hours, deadline_date, is_fixed, fixed_day, fixed_time, preferred_days=None):
+def create_subject(user_id, name, estimated_hours, deadline_date, is_fixed, fixed_day, fixed_time, preferred_days=None, preferred_time=None):
     with get_db() as db:
         db.execute("""
-            INSERT INTO subjects(user_id, name, estimated_hours, deadline_date, is_fixed, fixed_day, fixed_time, preferred_days)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (user_id, name, estimated_hours, deadline_date, int(is_fixed), fixed_day, fixed_time, preferred_days))
+            INSERT INTO subjects(user_id, name, estimated_hours, deadline_date, is_fixed, fixed_day, fixed_time, preferred_days, preferred_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (user_id, name, estimated_hours, deadline_date, int(is_fixed), fixed_day, fixed_time, preferred_days, preferred_time))
 
 
 def delete_subject(user_id, subject_id):
@@ -244,13 +250,13 @@ def delete_subjects(user_id):
         db.execute("DELETE FROM subjects WHERE user_id = ?", (user_id,))
 
 
-def update_subject(user_id, subject_id, name, estimated_hours, deadline_date, is_fixed, fixed_day, fixed_time, preferred_days=None):
+def update_subject(user_id, subject_id, name, estimated_hours, deadline_date, is_fixed, fixed_day, fixed_time, preferred_days=None, preferred_time=None):
     with get_db() as db:
         db.execute("""
             UPDATE subjects
-            SET name = ?, estimated_hours = ?, deadline_date = ?, is_fixed = ?, fixed_day = ?, fixed_time = ?, preferred_days = ?
+            SET name = ?, estimated_hours = ?, deadline_date = ?, is_fixed = ?, fixed_day = ?, fixed_time = ?, preferred_days = ?, preferred_time = ?
             WHERE user_id = ? AND id = ?
-        """, (name, estimated_hours, deadline_date, int(is_fixed), fixed_day, fixed_time, preferred_days, user_id, subject_id))
+        """, (name, estimated_hours, deadline_date, int(is_fixed), fixed_day, fixed_time, preferred_days, preferred_time, user_id, subject_id))
 
 
 def set_recovery_minutes(user_id, minutes):

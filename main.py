@@ -629,6 +629,7 @@ def add_subject(
     is_fixed: Optional[str] = Form(None),
     fixed_time: Optional[str] = Form(None),
     preferred_days: List[str] = Form([]),
+    preferred_time: Optional[str] = Form(None),
 ):
 
     user = current_user(request)
@@ -652,6 +653,7 @@ def add_subject(
         fixed_day=None,
         fixed_time=fixed_time if fixed else None,
         preferred_days=_clean_preferred_days(preferred_days),
+        preferred_time=(preferred_time or None) if not fixed else None,
     )
 
     return RedirectResponse("/dashboard?updated=1#subjectManager", status_code=303)
@@ -667,6 +669,7 @@ def edit_subject(
     is_fixed: Optional[str] = Form(None),
     fixed_time: Optional[str] = Form(None),
     preferred_days: List[str] = Form([]),
+    preferred_time: Optional[str] = Form(None),
 ):
 
     user = current_user(request)
@@ -691,6 +694,7 @@ def edit_subject(
         fixed_day=None,
         fixed_time=fixed_time if fixed else None,
         preferred_days=_clean_preferred_days(preferred_days),
+        preferred_time=(preferred_time or None) if not fixed else None,
     )
 
     return RedirectResponse("/dashboard?updated=1#subjectManager", status_code=303)

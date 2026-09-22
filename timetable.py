@@ -304,6 +304,43 @@ def _real_week(risk_level, subjects, base_rest_minutes=None, wake_time=None, tod
 
         cursor = day_start
         budget_left = daily_budget
+
+        # Subjects that asked for a preferred start time get placed first,
+        # earliest-requested-time first, each taking its whole day
+        # allowance in one sitting (split further only if it exceeds
+        # MAX_SITTING) anchored at the later of "when they asked for" or
+        # "whenever the day's already filled up to" — a request can't
+        # rewind an earlier subject's block. Untimed subjects then fill
+        # whatever's left via the round-robin below, same as before.
+        timed_order = sorted(
+            (
+                i for i in range(len(flexible))
+                if flexible[i].get("preferred_time") and remaining[i] > 0
+                and budget_left > 0 and day_allowance[i] > 0
+            ),
+            key=lambda i: _minutes(flexible[i]["preferred_time"]),
+        )
+        for i in timed_order:
+            subject = flexible[i]
+            chunk = min(day_allowance[i], remaining[i] * 60, budget_left)
+            chunk = int(chunk // 15) * 15
+            if chunk < 15:
+                continue
+
+            start_m = max(_minutes(subject["preferred_time"]), cursor)
+            for fs, fe in fixed_windows:
+                if start_m < fe and start_m + chunk > fs:
+                    start_m = fe
+
+            timed_blocks, end_m = _split_into_sittings(
+                start_m, chunk, subject["name"], "focus", MAX_SITTING, rest_len
+            )
+            blocks.extend(timed_blocks)
+            cursor = end_m
+            remaining[i] -= chunk / 60
+            day_allowance[i] -= chunk
+            budget_left -= chunk
+
         progressed = True
         while budget_left > 0 and progressed:
             progressed = False
