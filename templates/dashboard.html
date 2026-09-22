@@ -319,11 +319,8 @@
                     <label>Deadline (optional)<input type="date" name="deadline_date" value="{{ s.deadline_date or '' }}" data-deadline-input></label>
                     <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" {{ 'checked' if s.is_fixed else '' }} data-fixed-check> This is a fixed commitment</label>
                   </div>
-                  <div class="input-row" data-fixed-time-row hidden>
-                    <label>Time<input type="time" name="fixed_time" value="{{ s.fixed_time or '09:00' }}"></label>
-                  </div>
-                  <div class="input-row" data-preferred-time-row hidden>
-                    <label>Time (optional)<input type="time" name="preferred_time" value="{{ s.preferred_time or '' }}"></label>
+                  <div class="input-row">
+                    <label data-time-label>Time<input type="time" name="time" value="{{ s.fixed_time or s.preferred_time or '' }}" data-time-input></label>
                   </div>
                   {% set pref = (s.preferred_days or s.fixed_day or '').split(',') %}
                   <fieldset class="day-picker" data-day-picker hidden>
@@ -349,11 +346,8 @@
             <label>Deadline (optional)<input type="date" name="deadline_date" data-deadline-input></label>
             <label class="checkbox-label"><input type="checkbox" name="is_fixed" value="on" id="isFixedCheck" data-fixed-check> This is a fixed commitment</label>
           </div>
-          <div class="input-row" data-fixed-time-row hidden>
-            <label>Time<input type="time" name="fixed_time" value="09:00"></label>
-          </div>
-          <div class="input-row" data-preferred-time-row hidden>
-            <label>Time (optional)<input type="time" name="preferred_time"></label>
+          <div class="input-row">
+            <label data-time-label>Time<input type="time" name="time" data-time-input></label>
           </div>
           <fieldset class="day-picker" data-day-picker hidden>
             <legend data-day-picker-legend>Spread across specific days (optional)</legend>
@@ -629,21 +623,23 @@ document.querySelectorAll("[data-t-dot]").forEach((dot) => {
 </script>
 
 <script>
-// ---- Day picker visibility/wording — the same multi-day picker now
-// serves two different subject types: for a fixed commitment, it's
-// which day(s) it recurs on every week (a class can meet more than
-// once a week, e.g. Tue + Thu — there's no reason to force a single-
-// day dropdown when this already handles multiple days); for a
-// flexible task over an hour, it's still the optional "spread across
-// just these days" refinement. Time only makes sense for fixed. ----
+// ---- Day picker + time field visibility/wording — the same multi-day
+// picker and the same time field now each serve two different subject
+// types, reinterpreted server-side rather than duplicated in the form:
+// for a fixed commitment, the picker means which day(s) it recurs on
+// every week (a class can meet more than once a week, e.g. Tue + Thu)
+// and the time is required; for a flexible task over an hour, the
+// picker is the optional "spread across just these days" refinement
+// and the time is an optional preferred start. One field each, not
+// two near-identical ones — that was confusing on its own. ----
 document.querySelectorAll("[data-subject-form]").forEach((form) => {
   const hoursInput = form.querySelector("[data-hours-input]");
   const fixedCheck = form.querySelector("[data-fixed-check]");
   const dayPicker = form.querySelector("[data-day-picker]");
   const hint = form.querySelector("[data-day-picker-hint]");
   const legend = form.querySelector("[data-day-picker-legend]");
-  const timeRow = form.querySelector("[data-fixed-time-row]");
-  const preferredTimeRow = form.querySelector("[data-preferred-time-row]");
+  const timeLabel = form.querySelector("[data-time-label]");
+  const timeInput = form.querySelector("[data-time-input]");
   if (!hoursInput || !fixedCheck || !dayPicker) return;
 
   const FLEX_HINT = "Pick which days to work on this — its hours split evenly across just those. Leave unpicked and we'll spread it evenly across every day up to the deadline for you.";
@@ -661,8 +657,8 @@ document.querySelectorAll("[data-subject-form]").forEach((form) => {
       hint.textContent = fixed ? FIXED_HINT : FLEX_HINT;
     }
     if (legend) legend.textContent = fixed ? FIXED_LEGEND : FLEX_LEGEND;
-    if (timeRow) timeRow.hidden = !fixed;
-    if (preferredTimeRow) preferredTimeRow.hidden = fixed;
+    if (timeLabel) timeLabel.firstChild.textContent = fixed ? "Time" : "Time (optional)";
+    if (timeInput) timeInput.required = fixed;
     if (!eligible) {
       dayPicker.querySelectorAll("input[type=checkbox]").forEach((cb) => { cb.checked = false; });
     }

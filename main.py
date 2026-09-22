@@ -657,9 +657,8 @@ def add_subject(
     estimated_hours: float = Form(...),
     deadline_date: Optional[str] = Form(None),
     is_fixed: Optional[str] = Form(None),
-    fixed_time: Optional[str] = Form(None),
+    time: Optional[str] = Form(None),
     preferred_days: List[str] = Form([]),
-    preferred_time: Optional[str] = Form(None),
 ):
 
     user = current_user(request)
@@ -674,6 +673,9 @@ def add_subject(
     estimated_hours = max(0.25, min(40, estimated_hours))
     fixed = bool(is_fixed)
 
+    # One "Time" field in the form, same as one day picker — which
+    # column it lands in server-side depends on is_fixed, the student
+    # never has to think about two separately-labeled time fields.
     create_subject(
         user_id=user["id"],
         name=name,
@@ -681,9 +683,9 @@ def add_subject(
         deadline_date=deadline_date or None,
         is_fixed=fixed,
         fixed_day=None,
-        fixed_time=fixed_time if fixed else None,
+        fixed_time=time if fixed else None,
         preferred_days=_clean_preferred_days(preferred_days),
-        preferred_time=(preferred_time or None) if not fixed else None,
+        preferred_time=(time or None) if not fixed else None,
     )
 
     return RedirectResponse("/dashboard?updated=1#subjectManager", status_code=303)
@@ -697,9 +699,8 @@ def edit_subject(
     estimated_hours: float = Form(...),
     deadline_date: Optional[str] = Form(None),
     is_fixed: Optional[str] = Form(None),
-    fixed_time: Optional[str] = Form(None),
+    time: Optional[str] = Form(None),
     preferred_days: List[str] = Form([]),
-    preferred_time: Optional[str] = Form(None),
 ):
 
     user = current_user(request)
@@ -722,9 +723,9 @@ def edit_subject(
         deadline_date=deadline_date or None,
         is_fixed=fixed,
         fixed_day=None,
-        fixed_time=fixed_time if fixed else None,
+        fixed_time=time if fixed else None,
         preferred_days=_clean_preferred_days(preferred_days),
-        preferred_time=(preferred_time or None) if not fixed else None,
+        preferred_time=(time or None) if not fixed else None,
     )
 
     return RedirectResponse("/dashboard?updated=1#subjectManager", status_code=303)
