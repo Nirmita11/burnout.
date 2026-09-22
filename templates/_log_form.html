@@ -7,7 +7,7 @@
   the social-jetlag signal work at all.
 -->
 <form method="post" action="/log" class="log-form">
-  <label>Date<input type="date" name="log_date" value="{{ today }}" required></label>
+  <label>Date<input type="date" name="log_date" value="{{ log_form_date or today }}" required></label>
   <div class="input-row">
     <label>Study hours<input type="number" name="study_hours" min="0" max="24" step="0.1" placeholder="e.g. 4.5" required></label>
   </div>
@@ -36,5 +36,5 @@
       <label><input type="radio" name="mood" value="5"><span>5</span><small>great</small></label>
     </div>
   </fieldset>
-  <button class="primary-btn full" type="submit">Save today's signal →</button>
+  <button class="primary-btn full" type="submit">{{ log_form_button_label or "Save today's signal →" }}</button>
 </form>

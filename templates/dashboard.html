@@ -163,6 +163,19 @@
           </details>
         </div>
       {% else %}
+        {% if missed_yesterday %}
+          <div class="log-today-card pending catch-up-card">
+            <span class="mini-label">CATCH UP</span>
+            <h2>You didn't log {{ yesterday_label }} either.</h2>
+            <p>No judgment — just log both while it's quick. Start with yesterday:</p>
+            <details class="log-today-edit" open>
+              <summary>Log {{ yesterday_label }} →</summary>
+              {% with log_form_date = yesterday, log_form_button_label = "Save " + yesterday_label + "'s signal →" %}
+                {% include "_log_form.html" %}
+              {% endwith %}
+            </details>
+          </div>
+        {% endif %}
         <div class="log-today-card pending">
           <span class="mini-label">DAILY CHECK-IN</span>
           <h2>Add today's entry.</h2>

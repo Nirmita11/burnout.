@@ -611,6 +611,8 @@ h1.display em{font-style:italic;color:var(--coral);font-weight:500}
   background:linear-gradient(165deg,var(--bg3),var(--bg2));
 }
 .log-today-card.pending{border-color:rgba(232,145,107,.3)}
+.log-today-card.catch-up-card{border-color:rgba(217,162,78,.4);background:linear-gradient(165deg,rgba(217,162,78,.06),var(--bg2));margin-bottom:18px}
+.log-today-card.catch-up-card h2{color:var(--status-moderate)}
 .log-today-card h2{font:600 26px var(--serif);letter-spacing:-.5px;margin:10px 0 8px}
 .log-today-card>p{color:var(--muted);margin:0 0 22px}
 

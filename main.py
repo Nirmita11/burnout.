@@ -55,6 +55,25 @@ app.add_middleware(
     ),
 )
 
+
+@app.middleware("http")
+async def no_cache_dynamic_pages(request: Request, call_next):
+    """Every non-static page here is personalized and time-dependent —
+    today's log state, the weekly plan, the risk score — so nothing
+    outside /static is ever safe for a browser or an intermediate edge/
+    CDN to cache and replay on a later visit. Without an explicit
+    header, there's nothing stopping that: a plain reload can still be
+    served a cached copy from earlier instead of hitting the app again,
+    which is exactly what "today's entry is in" surviving into a new
+    day looks like from the outside. Static assets under /static keep
+    their own normal caching (they're cache-busted by css_version
+    instead of relying on Cache-Control at all).
+    """
+    response = await call_next(request)
+    if not request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
+
 # Jinja templates
 templates = Jinja2Templates(
     directory="templates"
@@ -445,6 +464,14 @@ def dashboard(request: Request):
 
     logged_today = any(r["log_date"] == today.isoformat() for r in rows)
 
+    # A student who skipped a day shouldn't have that silently forgotten
+    # — surface it and let them log both yesterday and today in one go,
+    # rather than only ever being offered "today" and needing to notice
+    # the date field themselves to go back and fill in what they missed.
+    yesterday = today - timedelta(days=1)
+    logged_yesterday = any(r["log_date"] == yesterday.isoformat() for r in rows)
+    missed_yesterday = bool(rows) and not logged_yesterday and not logged_today
+
     # Secondary ML signal, shown only as a small corner badge next to the
     # main risk card (see dashboard.html) — never its own competing block.
     # The full breakdown still lives on its own /model-insights page.
@@ -469,6 +496,9 @@ def dashboard(request: Request):
             "greeting": time_of_day_greeting(now),
             "has_data": bool(rows),
             "logged_today": logged_today,
+            "missed_yesterday": missed_yesterday,
+            "yesterday": yesterday.isoformat(),
+            "yesterday_label": yesterday.strftime("%A, %B ") + str(yesterday.day),
             "streak": _logging_streak(rows),
             "weekly_plan": weekly_plan,
             "today_schedule": today_schedule,
