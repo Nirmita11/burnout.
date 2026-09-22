@@ -9,9 +9,12 @@ rule-based analysis on the dashboard, never used to replace it.
 import json
 from pathlib import Path
 
-import joblib
-import pandas as pd
-
+# joblib/pandas (and, transitively, scikit-learn to unpickle the model)
+# are imported lazily inside the functions that actually need them, not
+# here at module load — main.py imports this module unconditionally, so
+# a top-level import here paid that cost on every cold start, even for
+# requests that never touch the ML prediction at all (login, landing
+# page, static assets, ...).
 MODEL_PATH = Path(__file__).with_name("burnout_model.pkl")
 METRICS_PATH = Path(__file__).with_name("model_metrics.json")
 
@@ -22,6 +25,7 @@ _load_error = None
 def _get_model():
     global _model, _load_error
     if _model is None and _load_error is None:
+        import joblib
         try:
             _model = joblib.load(MODEL_PATH)
         except FileNotFoundError as e:
@@ -52,6 +56,7 @@ def predict_probability(study_hours, sleep_hours, mood):
     if model is None:
         return None
 
+    import pandas as pd
     X = pd.DataFrame(
         [[study_hours, sleep_hours, mood]],
         columns=["study_hours", "sleep_hours", "mood"],

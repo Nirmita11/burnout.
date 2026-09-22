@@ -109,20 +109,60 @@ class _PGConn:
         self._conn.close()
 
 
+_pg_conn = None
+
+
+def _pg_connection():
+    """A single psycopg2 connection reused across requests within this
+    process, instead of paying a fresh TCP+TLS+auth handshake to
+    Supabase on every query. A warm serverless container (Vercel, Lambda
+    et al.) keeps module-level state alive between invocations, so this
+    genuinely persists across requests, not just within one — a single
+    dashboard load alone makes several separate get_db() calls
+    (get_logs, get_subjects, ...), and each one used to open and close
+    its own connection from scratch.
+    """
+    global _pg_conn
+    import psycopg2
+    if _pg_conn is not None and not _pg_conn.closed:
+        return _pg_conn
+    _pg_conn = psycopg2.connect(DATABASE_URL)
+    return _pg_conn
+
+
 @contextmanager
 def get_db():
     if USE_POSTGRES:
-        import psycopg2
-        conn = _PGConn(psycopg2.connect(DATABASE_URL))
+        raw = _pg_connection()
+        conn = _PGConn(raw)
+        try:
+            yield conn
+            raw.commit()
+        except Exception:
+            global _pg_conn
+            try:
+                raw.rollback()
+            except Exception:
+                # Rollback itself failing means the connection is dead
+                # (e.g. Supabase's pooler dropped it) — clear the cache
+                # so the *next* request opens a fresh one instead of
+                # repeatedly handing out a connection that can't recover.
+                _pg_conn = None
+                try:
+                    raw.close()
+                except Exception:
+                    pass
+            raise
+        # Deliberately not closed here — see _pg_connection() above.
     else:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conn
-        conn.commit()
-    finally:
-        conn.close()
+        try:
+            yield conn
+            conn.commit()
+        finally:
+            conn.close()
 
 
 def _ensure_column(db, table, column, coltype):
