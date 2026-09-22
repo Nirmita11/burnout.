@@ -297,7 +297,7 @@
                   <span>
                     <b>{{ s.name }}</b>
                     {% if s.is_fixed %}Fixed · {{ (s.preferred_days or s.fixed_day or '').replace(',', ', ') }} · {{ s.fixed_time }}
-                    {% else %}{{ s.estimated_hours }}h/week{% if s.deadline_date %} · due {{ s.deadline_date }}{% endif %}{% if s.preferred_time %} · ~{{ s.preferred_time }}{% endif %}
+                    {% else %}{{ s.estimated_hours }}h/week{% if s.deadline_date %} · due {{ s.deadline_date }}{% endif %}{% if s.preferred_time %} · {{ s.preferred_time }}{% endif %}
                     {% endif %}
                   </span>
                   <div class="subject-actions">
@@ -323,7 +323,7 @@
                     <label>Time<input type="time" name="fixed_time" value="{{ s.fixed_time or '09:00' }}"></label>
                   </div>
                   <div class="input-row" data-preferred-time-row hidden>
-                    <label>Start around (optional)<input type="time" name="preferred_time" value="{{ s.preferred_time or '' }}"></label>
+                    <label>Time (optional)<input type="time" name="preferred_time" value="{{ s.preferred_time or '' }}"></label>
                   </div>
                   {% set pref = (s.preferred_days or s.fixed_day or '').split(',') %}
                   <fieldset class="day-picker" data-day-picker hidden>
@@ -353,7 +353,7 @@
             <label>Time<input type="time" name="fixed_time" value="09:00"></label>
           </div>
           <div class="input-row" data-preferred-time-row hidden>
-            <label>Start around (optional)<input type="time" name="preferred_time"></label>
+            <label>Time (optional)<input type="time" name="preferred_time"></label>
           </div>
           <fieldset class="day-picker" data-day-picker hidden>
             <legend data-day-picker-legend>Spread across specific days (optional)</legend>
