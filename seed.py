@@ -64,6 +64,23 @@ def add_history(uid, study, sleep, mood, sleep_start=None, wake_time=None):
 
 
 def main():
+    # ensure_user() below wipes and rebuilds a demo account's entire log
+    # history every time it's run (see delete_user_logs there) — silently
+    # fine against a local throwaway SQLite file, but against Supabase
+    # it resets whatever real testing history was sitting in the live,
+    # shared database. This nearly always means "I meant to run this
+    # locally" rather than "I meant to reset the live demo data", so
+    # require an explicit confirmation whenever it's about to touch
+    # Postgres specifically.
+    from database import USE_POSTGRES
+    if USE_POSTGRES:
+        print("DATABASE_URL is set — this will WIPE AND REBUILD the demo")
+        print("accounts' history on that live database, not a local file.")
+        answer = input("Type 'yes' to continue: ").strip().lower()
+        if answer != "yes":
+            print("Aborted — nothing was changed.")
+            return
+
     init_db()
 
     steady = ensure_user("steady@demo.com")
